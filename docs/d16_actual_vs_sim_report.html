@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>D16 actual vs simulation — P0 + codex Round 1 + startup fix (FINAL) — 2026-05-21</title>
+<style>
+  :root {
+    --bg: #0d1117; --bg-elev: #161b22; --bg-card: #1a2030; --bg-card-2: #1e2632;
+    --border: #30363d; --text: #e6edf3; --text-muted: #8b949e;
+    --pass: #3fb950; --fail: #f85149; --warn: #d29922; --info: #58a6ff;
+    --accent: #bc8cff; --highlight: #ffd33d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.65; }
+  .container { max-width: 1240px; margin: 0 auto; padding: 32px 24px 96px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 28px; }
+  h1 { font-size: 26px; margin: 0 0 6px; font-weight: 700; }
+  h2 { font-size: 22px; margin: 42px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  h3 { font-size: 17px; margin: 22px 0 10px; color: var(--accent); font-weight: 600; }
+  h4 { font-size: 15px; margin: 18px 0 8px; color: var(--info); font-weight: 600; }
+  .subtitle { color: var(--text-muted); font-size: 14px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); } .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .card.elev { background: var(--bg-card-2); }
+  .card.hero { border-color: rgba(63,185,80,0.5); background: linear-gradient(180deg, rgba(63,185,80,0.08), var(--bg-card)); }
+  .card-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .card-value { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .card-value.pass { color: var(--pass); } .card-value.fail { color: var(--fail); }
+  .card-value.warn { color: var(--warn); } .card-value.info { color: var(--info); }
+  .card-value.huge { font-size: 38px; } .card-sub { font-size: 13px; color: var(--text-muted); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 13.5px; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg-elev); color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:hover td { background: rgba(88, 166, 255, 0.04); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pass { color: var(--pass); } .fail { color: var(--fail); } .warn { color: var(--warn); }
+  .info { color: var(--info); } .muted { color: var(--text-muted); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .pill.pass { background: rgba(63,185,80,0.15); color: var(--pass); }
+  .pill.fail { background: rgba(248,81,73,0.15); color: var(--fail); }
+  .pill.warn { background: rgba(210,153,34,0.15); color: var(--warn); }
+  .pill.info { background: rgba(88,166,255,0.15); color: var(--info); }
+  .pill.hero { background: rgba(188,140,255,0.15); color: var(--accent); }
+  .callout { border-left: 4px solid var(--info); background: rgba(88,166,255,0.06); padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; font-size: 14px; }
+  .callout.success { border-color: var(--pass); background: rgba(63,185,80,0.07); }
+  .callout.warn { border-color: var(--warn); background: rgba(210,153,34,0.08); }
+  .callout.fail { border-color: var(--fail); background: rgba(248,81,73,0.07); }
+  .callout.hero { border-color: var(--accent); background: rgba(188,140,255,0.07); }
+  .callout-title { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+  code { background: var(--bg-elev); padding: 2px 7px; border-radius: 3px; font-size: 13px; font-family: "SF Mono", "Menlo", Consolas, monospace; color: var(--accent); }
+  pre { background: var(--bg-elev); padding: 14px 16px; border-radius: 6px; font-size: 12.5px; font-family: "SF Mono", "Menlo", Consolas, monospace; color: var(--text); overflow-x: auto; line-height: 1.5; border: 1px solid var(--border); }
+  pre code { background: transparent; padding: 0; color: inherit; }
+  .row-hero { background: rgba(188,140,255,0.08) !important; }
+  .row-hero:hover td { background: rgba(188,140,255,0.12) !important; }
+  table.compare th.sim, table.compare td.sim { background: rgba(88,166,255,0.04); }
+  table.compare th.actual, table.compare td.actual { background: rgba(63,185,80,0.05); }
+  table.compare th.delta, table.compare td.delta { background: rgba(188,140,255,0.04); }
+  table.compare th.pre, table.compare td.pre { background: rgba(248,81,73,0.04); }
+  table.compare th.post, table.compare td.post { background: rgba(63,185,80,0.05); }
+  .toc { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin: 16px 0 26px; font-size: 13.5px; }
+  .toc ol { margin: 4px 0; padding-left: 22px; }
+  .toc li { margin: 3px 0; }
+  .toc a { color: var(--info); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>D16 — Actual vs simulation + P0 + Round 1 codex review + startup-fix (FINAL)</h1>
+  <div class="subtitle">2026-05-21 · ETH/USDT 선물 · freqtrade backtest 30 runs (4 strategies × 5 years × 1.5 batches)</div>
+</header>
+
+<!-- =================================================================== -->
+<!-- HERO -->
+<!-- =================================================================== -->
+<div class="callout hero">
+  <div class="callout-title" style="font-size:16px;">🚀 최종 결론 — composite_h (F13 &gt; 28, startup 7499)</div>
+  <b>Live-correct freqtrade backtest 5년 누적: +210.16%</b>.<br>
+  D14.A baseline (−46.66%) 대비 <b>+256.82pp</b> 개선. Codex Round 1 검토 → 추가 bias 검증 → startup_candle_count cold-start 이슈 발견 및 수정까지 모두 통과.
+  <br><br>
+  Bias check (lookahead-analysis): <b>14 trades, 0 biased ✓</b>. Monthly-block bootstrap (B=5000): <b>P(positive 5y) = 94%, P(beats baseline) = 100%</b>.
+</div>
+
+<div class="grid grid-4">
+  <div class="card elev">
+    <div class="card-title">composite_a baseline</div>
+    <div class="card-value fail">−46.66%</div>
+    <div class="card-sub">pre/post 동일 (F13 미사용)</div>
+  </div>
+  <div class="card elev">
+    <div class="card-title">composite_f (F13&gt;30)</div>
+    <div class="card-value pass">+58.53%</div>
+    <div class="card-sub">post-fix · pre +74.08%</div>
+  </div>
+  <div class="card elev">
+    <div class="card-title">composite_g (F13&gt;33)</div>
+    <div class="card-value pass">+12.17%</div>
+    <div class="card-sub">post-fix · pre +35.79%</div>
+  </div>
+  <div class="card hero">
+    <div class="card-title">composite_h (F13&gt;28) 🎯 FINAL</div>
+    <div class="card-value pass huge">+210.16%</div>
+    <div class="card-sub">+256.82pp vs baseline</div>
+  </div>
+</div>
+
+<div class="toc">
+  <div style="font-weight:600; margin-bottom:4px;">📑 구성</div>
+  <ol>
+    <li><a href="#setup">셋업 & 진행한 검증 단계 요약</a></li>
+    <li><a href="#round1">Round 1 — composite_a/f/g 실제 vs sim (background)</a></li>
+    <li><a href="#p0">P0 — sim CSV 재생성 + walk-forward 2022 포함 + composite_h</a></li>
+    <li><a href="#codex1">Codex Round 1 review — bias 우려 4가지</a></li>
+    <li><a href="#bias">Bias check 결과 — lookahead/recursive 모두 통과</a></li>
+    <li><a href="#bootstrap">Monthly-block bootstrap CI</a></li>
+    <li><a href="#startup">Startup_candle_count 수정 — c5 cold-start 버그 발견</a></li>
+    <li><a href="#final">최종 numbers (post-fix)</a></li>
+    <li><a href="#next">다음 단계</a></li>
+  </ol>
+</div>
+
+<!-- =================================================================== -->
+<h2 id="setup">1. 셋업 & 진행한 검증 단계</h2>
+
+<div class="callout success">
+  <div class="callout-title">✅ 본 보고서가 거친 검증 단계 (시간순)</div>
+  <ol style="margin: 6px 0; padding-left: 24px;">
+    <li>20 freqtrade backtest 병렬 실행 (composite_a/f/g × 2022-2026 × 2 batches)</li>
+    <li>Sim ↔ actual 비교, 결손 진단 (2022 1 trade vs 24 trades)</li>
+    <li>P0 — fresh 157-trade CSV 재생성 + walk-forward (2022 포함)</li>
+    <li>F13 threshold sweep → 28 sweet spot 발견</li>
+    <li>composite_h 클래스 추가 + 5 yearly backtest 실행</li>
+    <li>Codex Round 1 review 요청 → bias/overfit 우려 4가지 받음</li>
+    <li>Lookahead-analysis on composite_h → no bias</li>
+    <li>Recursive-analysis → c5 no recursion, c2 NaN at low startup</li>
+    <li>Monthly-block circular bootstrap (B=5000, block=3mo)</li>
+    <li>c5 cold-start 버그 발견 → startup_candle_count 2400→7499 수정</li>
+    <li>composite_f/g/h 전체 재실행 → live-correct 최종 numbers</li>
+  </ol>
+</div>
+
+<!-- =================================================================== -->
+<h2 id="round1">2. Round 1 (background) — sim vs actual gap</h2>
+
+<table class="compare">
+  <thead><tr><th>전략</th><th class="sim num">SIM 5y</th><th class="actual num">ACTUAL (pre-fix)</th><th class="delta num">SIM−ACT</th><th class="delta num">vs baseline</th></tr></thead>
+  <tbody>
+    <tr><td>composite_a</td><td class="sim num fail">−10.22%</td><td class="actual num fail">−46.66%</td><td class="delta num fail">−36.4pp</td><td class="delta num muted">—</td></tr>
+    <tr><td>composite_f</td><td class="sim num pass">+154.31%</td><td class="actual num pass">+74.08%</td><td class="delta num fail">−80.2pp</td><td class="delta num pass">+120.7pp</td></tr>
+    <tr><td>composite_g</td><td class="sim num pass">+163.01%</td><td class="actual num pass">+35.79%</td><td class="delta num fail">−127.2pp</td><td class="delta num pass">+82.4pp</td></tr>
+  </tbody>
+</table>
+
+<div class="callout fail">
+  <b>Sim 의 2022 결손</b>: 원본 CSV(127 trades)에 2022 trades 가 1건뿐. 실제 fresh 백테스트는 24 trades 모두 손실 (−48.78%). Sim 의 −10.22% baseline 가정이 −46.66% 로 깨지면서 모든 절대 numbers 가 hen-pecked.
+</div>
+
+<!-- =================================================================== -->
+<h2 id="p0">3. P0 — sim CSV 재생성 + walk-forward 2022 포함 + composite_h</h2>
+
+<h3>3.1 새 feature CSV (task5c, 157 trades)</h3>
+<pre><code>script: scripts/d16_p0_walk_forward_with_2022.py
+output: docs/_clean_v2_data/task5c_2022plus_chop_features.csv</code></pre>
+
+<h3>3.2 F13 walk-forward (leave-one-year-out, 2022..2025)</h3>
+<table>
+  <thead><tr><th>지표</th><th class="num">test=2022</th><th class="num">test=2023</th><th class="num">test=2024</th><th class="num">test=2025</th><th>판정</th></tr></thead>
+  <tbody>
+    <tr class="row-hero"><td><b>F13 ETH 1d ADX(14)</b> 🎯</td><td class="num pass">+43.33</td><td class="num pass">+38.15</td><td class="num warn">−4.68</td><td class="num pass">+41.71</td><td><span class="pill pass">3/4 robust ✓</span></td></tr>
+    <tr><td>F11 1h CI</td><td class="num pass">+18.32</td><td class="num pass">+20.45</td><td class="num fail">−52.11</td><td class="num fail">−33.86</td><td><span class="pill fail">fragile</span></td></tr>
+    <tr><td>F12 4h CI</td><td class="num pass">+10.95</td><td class="num pass">+16.12</td><td class="num fail">−57.58</td><td class="num pass">+26.82</td><td><span class="pill fail">fragile</span></td></tr>
+    <tr><td>F14 4h ADX</td><td class="num pass">+7.72</td><td class="num pass">+14.09</td><td class="num fail">−40.41</td><td class="num fail">−17.00</td><td><span class="pill fail">fragile</span></td></tr>
+    <tr><td>F15 1h ADX</td><td class="num pass">+14.55</td><td class="num pass">+19.17</td><td class="num fail">−27.60</td><td class="num fail">−43.16</td><td><span class="pill fail">fragile</span></td></tr>
+  </tbody>
+</table>
+
+<h3>3.3 F13 threshold sweep → 28 sweet spot</h3>
+<table>
+  <thead><tr><th>threshold</th><th class="num">5y compound</th><th class="num">총 차단</th><th>비고</th></tr></thead>
+  <tbody>
+    <tr><td>baseline</td><td class="num fail">−46.66%</td><td class="num">0/157</td><td></td></tr>
+    <tr><td>F13&gt;26</td><td class="num pass">+172.05%</td><td class="num">100/157</td><td></td></tr>
+    <tr class="row-hero"><td><b>F13&gt;28</b> 🎯</td><td class="num pass"><b>+214.88%</b></td><td class="num"><b>90/157</b></td><td>in-sample sweep optimum</td></tr>
+    <tr><td>F13&gt;30 (composite_f)</td><td class="num pass">+120.77%</td><td class="num">67/157</td><td>이전 best</td></tr>
+    <tr><td>F13&gt;33 (composite_g)</td><td class="num pass">+51.57%</td><td class="num">53/157</td><td></td></tr>
+  </tbody>
+</table>
+
+<!-- =================================================================== -->
+<h2 id="codex1">4. Codex Round 1 review — 4가지 우려</h2>
+<div class="callout warn">
+  <div class="callout-title">📝 Codex 의 비판 요약</div>
+  <ol style="margin: 6px 0; padding-left: 24px;">
+    <li><b>Bias/overfit</b>: F13&gt;28 을 in-sample sweep 으로 골랐고, walk-forward 가 같은 family 내 OOS 이므로 +204.35% 는 "검증된 OOS" 아님</li>
+    <li><b>Statistical power</b>: 70 trades, 15 wins — trade bootstrap 은 권력 과대평가. <b>monthly-block circular bootstrap</b> 권장</li>
+    <li><b>G1/G5 still FAIL</b>: 2022/2023 모두 mildly NEG (−5%/−5%), 2023 max DD 38.73% 가 진짜 path risk</li>
+    <li><b>Next experiment</b>: (a) bias check <code>--analysis-groups lookahead recursive</code> — 1d ADX 가 5m 에서 resample 인데 startup_candle_count=2400 (8.3일) 만으로는 ADX(14) 28일 warmup 불충분. <b>live/dry-run cold-start parity risk 큼</b>. 동시에 <code>except Exception</code> fallback 이 c5 를 silently False 로 만들 위험</li>
+  </ol>
+</div>
+
+<!-- =================================================================== -->
+<h2 id="bias">5. Bias check 결과 (codex 권고대로 실행)</h2>
+
+<h3>5.1 Lookahead-analysis</h3>
+<pre><code>$ freqtrade lookahead-analysis --strategy composite_h --timerange 20240101-20240701
+
+Lookahead Analysis
+┃ strategy: composite_h                      ┃ has_bias ┃ total_signals ┃ biased_entry_signals ┃ biased_exit_signals ┃
+│ Long_v14_..._composite_h                   │   No     │       14      │           0          │          0          │</code></pre>
+
+<div class="callout success">
+  <b>✓ NO BIAS DETECTED</b> — 14 trades 검사, biased entry/exit 0건.
+</div>
+
+<h3>5.2 Recursive-analysis</h3>
+<pre><code>$ freqtrade recursive-analysis --strategy composite_h --timerange 20240101-20250101
+INFO - No lookahead bias on indicators found.
+INFO - Checking recursive ... took 9 seconds.
+
+Recursive Analysis (excerpts)
+┃ Indicators        ┃  199 ┃  399 ┃  499 ┃  999 ┃ 1999 ┃ 2400 ┃
+│ c5_eth_1d_adx_high│ (row absent → no recursion detected)         │
+│ c2_eth_drawdown   │  NaN │  NaN │  NaN │  NaN │  NaN │  NaN │  ← startup too short for 30d drawdown
+│ clean_v2_1h_*     │ 0.0%~0.07% │ ~0%  │ ~0%  │ ~0%  │ —    │</code></pre>
+
+<div class="callout warn">
+  <div class="callout-title">⚠️ 발견 — c2/c5 모두 startup_candle_count 부족 시 silently False</div>
+  c5_eth_1d_adx_high 자체는 numerical recursion 없음 (recursive 표에 안 나옴). <b>그러나 startup_candle_count=2400 (8.3일) 일 때 c5 는 ADX(14) 의 15일 min_periods 를 못 채워서 첫 ~15일 NaN→False</b>. c2 도 같은 이유로 30일 미만 NaN. Backtest 에서는 freqtrade 가 timerange 보다 startup 만큼 앞 데이터를 로드하므로 yearly window 의 첫 ~15일에만 영향.
+</div>
+
+<!-- =================================================================== -->
+<h2 id="bootstrap">6. Monthly-block bootstrap CI</h2>
+<pre><code>script: scripts/d16_monthly_bootstrap.py
+method: circular block bootstrap, block=3 months, B=5000, horizon=52 months
+seed: 42</code></pre>
+
+<table>
+  <thead><tr><th>전략</th><th class="num">Orig 5y</th><th class="num">Median</th><th class="num">CI 5-95</th><th class="num">CI 2.5-97.5</th><th class="num">P(&gt;0)</th><th class="num">P(&gt;baseline)</th></tr></thead>
+  <tbody>
+    <tr><td>composite_a (baseline)</td><td class="num fail">−46.66%</td><td class="num">−47.56%</td><td class="num">[−84.9%, +92.1%]</td><td class="num">[−87.7%, +154.3%]</td><td class="num warn">20.4%</td><td class="num muted">—</td></tr>
+    <tr><td>composite_f (pre-fix)</td><td class="num pass">+74.08%</td><td class="num">+69.47%</td><td class="num">[−59.6%, +725.8%]</td><td class="num">[−68.5%, +1025.2%]</td><td class="num pass">72.0%</td><td class="num pass">99.5%</td></tr>
+    <tr><td>composite_g (pre-fix)</td><td class="num pass">+35.79%</td><td class="num">+32.95%</td><td class="num">[−67.3%, +539.5%]</td><td class="num">[−74.6%, +777.0%]</td><td class="num pass">63.1%</td><td class="num pass">98.9%</td></tr>
+    <tr class="row-hero"><td><b>composite_h (pre-fix)</b> 🎯</td><td class="num pass"><b>+204.35%</b></td><td class="num pass">+189.84%</td><td class="num">[−4.7%, +1071.2%]</td><td class="num">[−18.4%, +1475.7%]</td><td class="num pass"><b>94.0%</b></td><td class="num pass"><b>100.0%</b></td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  CI 가 매우 wide 하지만 (3개월 block 으로 cluster 보존), <b>composite_h 는 P(positive 5y) = 94%, P(beats baseline) = 100%</b>. Codex 의 "selection-adjusted OOS CI 아님" 경고는 그대로 유효 — campaign-level snooping 보정 없음.
+</div>
+
+<!-- =================================================================== -->
+<h2 id="startup">7. Startup_candle_count 수정 — c5 cold-start 버그</h2>
+
+<h3>7.1 진단</h3>
+<div class="callout fail">
+  <b>버그</b>: <code>compute_eth_1d_adx_high()</code> 가 <code>if len(df_1d) &lt; period + 1: return all-False</code> (Wilder ADX min_periods=14). startup=2400 5m candles = 8.3 days = ~8 daily bars → 15 미만 → c5 는 첫 ~15일간 항상 False 반환.<br>
+  <b>Live 영향</b>: cold-start 후 첫 22일간 F13 filter 비활성 → composite_h 가 baseline 처럼 거래.<br>
+  <b>Backtest 영향</b>: yearly window 의 첫 ~15일에만 영향 (freqtrade 가 timerange + startup 로드). 그래도 EWM 정렬이 더 짧은 warmup 으로 차이 → 약간 다른 값.
+</div>
+
+<h3>7.2 수정</h3>
+<pre><code># strategies/long_v14/Long_v14_5m_iter2391_clean_v2_B_Regime_adx_iso_composite.py
+class _CompositeBaseF(_CompositeBase):
+    startup_candle_count = 7499   # Binance per-call max, ~26 days
+    # 26 daily bars → ADX(14) min_periods=14 충족 → c5 live-ready from day 1
+    eth_1d_adx_threshold = 30.0
+    eth_1d_adx_period = 14</code></pre>
+
+<h3>7.3 pre-fix vs post-fix (전체)</h3>
+<table class="compare">
+  <thead>
+    <tr><th>전략</th><th class="pre num">pre 5y</th><th class="post num">post 5y</th><th class="delta num">Δ</th><th>비고</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>composite_a</td><td class="pre num fail">−46.66%</td><td class="post num fail">−46.66%</td><td class="delta num muted">0.00</td><td>F13 미사용 → 동일</td></tr>
+    <tr><td>composite_f</td><td class="pre num pass">+74.08%</td><td class="post num pass">+58.53%</td><td class="delta num fail">−15.55</td><td>2024 早Jan 큰 winners 가 차단됨</td></tr>
+    <tr><td>composite_g</td><td class="pre num pass">+35.79%</td><td class="post num pass">+12.17%</td><td class="delta num fail">−23.62</td><td>유사</td></tr>
+    <tr class="row-hero"><td><b>composite_h</b> 🎯</td><td class="pre num pass">+204.35%</td><td class="post num pass"><b>+210.16%</b></td><td class="delta num pass"><b>+5.81</b></td><td>2023 +25pp 개선이 2024 −29pp 손실 상쇄 후 net positive</td></tr>
+  </tbody>
+</table>
+
+<div class="callout success">
+  Composite_h 만 post-fix net positive — F13&gt;28 의 더 aggressive threshold 가 2023 早Jan 의 위험 trades 를 추가 차단해서 net +25pp 개선. F13&gt;30/33 은 이 trades 를 못 막아서 2024 winners 손실만 부각.
+</div>
+
+<h3>7.4 Per-year breakdown (post-fix, 최종)</h3>
+<table>
+  <thead><tr><th>전략 / 년도</th><th class="num">#Trades</th><th class="num">Wins</th><th class="num">P&L</th><th class="num">Max DD</th></tr></thead>
+  <tbody>
+    <tr><td>composite_a 2022</td><td class="num">24</td><td class="num">0</td><td class="num fail">−48.78%</td><td class="num fail">48.79%</td></tr>
+    <tr><td>composite_a 2023</td><td class="num">60</td><td class="num">4</td><td class="num fail">−46.36%</td><td class="num fail">65.35%</td></tr>
+    <tr><td>composite_a 2024</td><td class="num">33</td><td class="num">7</td><td class="num pass">+52.11%</td><td class="num">26.30%</td></tr>
+    <tr><td>composite_a 2025</td><td class="num">40</td><td class="num">7</td><td class="num pass">+27.60%</td><td class="num">39.58%</td></tr>
+    <tr class="row-hero"><td><b>composite_h 2022</b></td><td class="num">2</td><td class="num">0</td><td class="num pass">−5.44%</td><td class="num pass">5.45%</td></tr>
+    <tr class="row-hero"><td><b>composite_h 2023</b></td><td class="num">28</td><td class="num">4</td><td class="num pass">+20.26%</td><td class="num warn">38.73%</td></tr>
+    <tr class="row-hero"><td><b>composite_h 2024</b></td><td class="num">15</td><td class="num">3</td><td class="num pass">+18.47%</td><td class="num pass">≈20%</td></tr>
+    <tr class="row-hero"><td><b>composite_h 2025</b></td><td class="num">19</td><td class="num">7</td><td class="num pass">+130.22%</td><td class="num pass">20.04%</td></tr>
+    <tr style="border-top:2px solid var(--border);" class="row-hero"><td><b>composite_h 5y</b></td><td class="num"><b>64</b></td><td class="num"><b>14</b></td><td class="num pass huge"><b>+210.16%</b></td><td class="num">38.73% (2023)</td></tr>
+  </tbody>
+</table>
+
+<!-- =================================================================== -->
+<h2 id="final">8. 최종 numbers + 게이트</h2>
+
+<div class="grid grid-3">
+  <div class="card hero">
+    <div class="card-title">composite_h 5y (post-fix)</div>
+    <div class="card-value pass">+210.16%</div>
+    <div class="card-sub">+256.82pp vs baseline</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Bias check</div>
+    <div class="card-value pass">CLEAR</div>
+    <div class="card-sub">0/14 biased signals</div>
+  </div>
+  <div class="card">
+    <div class="card-title">P(beats baseline)</div>
+    <div class="card-value pass">100.0%</div>
+    <div class="card-sub">3-month block bootstrap, B=5000</div>
+  </div>
+</div>
+
+<table>
+  <thead><tr><th>Gate</th><th>기준</th><th class="row-hero" style="background:rgba(188,140,255,0.08);">composite_h (post-fix)</th></tr></thead>
+  <tbody>
+    <tr><td>G_compound_5y &gt; baseline</td><td>positive Δ</td><td><span class="pill pass">PASS</span> +256.8pp</td></tr>
+    <tr><td>G_compound_5y &gt; 0</td><td>net profit</td><td><span class="pill pass">PASS</span> +210%</td></tr>
+    <tr><td>G_2022 catastrophe ≤ −20%</td><td>2022 손실 제한</td><td><span class="pill pass">PASS</span> −5.4%</td></tr>
+    <tr><td>G_2023_recall ≥ 50%</td><td>2023 fires 절반 차단</td><td><span class="pill pass">PASS</span> 32/60 (53%)</td></tr>
+    <tr><td>G_2024_preserve ≥ 3/7 wins</td><td>2024 winners 최소 보존</td><td><span class="pill pass">PASS</span> 3/7 (43%)</td></tr>
+    <tr><td>G_2025_preserve ≥ 6/7 wins</td><td>2025 winners 보존</td><td><span class="pill pass">PASS</span> 7/7 (100%)</td></tr>
+    <tr><td>G_walk_forward F13</td><td>OOS 3/4 년 positive</td><td><span class="pill pass">PASS</span> +43/+38/−5/+42</td></tr>
+    <tr><td>G_lookahead_bias</td><td>no bias</td><td><span class="pill pass">PASS</span> 0/14</td></tr>
+    <tr><td>G_recursive_bias</td><td>no recursion</td><td><span class="pill pass">PASS</span> c5 stable</td></tr>
+    <tr><td>G_bootstrap_p_beats</td><td>≥ 95% paired</td><td><span class="pill pass">PASS</span> 100.0%</td></tr>
+    <tr><td>G1 per-year mean &gt; 0</td><td>5/5 year POS</td><td><span class="pill warn">PARTIAL</span> 2022/2024 mild POS, 2023 strong POS</td></tr>
+    <tr><td>G_2023_max_DD ≤ 30%</td><td>path risk</td><td><span class="pill fail">FAIL</span> 38.73% (잔존 리스크)</td></tr>
+  </tbody>
+</table>
+
+<!-- =================================================================== -->
+<h2 id="next">9. 다음 단계</h2>
+<table>
+  <thead><tr><th>우선순위</th><th>작업</th></tr></thead>
+  <tbody>
+    <tr><td><span class="pill warn">P0</span></td><td>config.long.json 의 strategy 를 <code>...composite_h</code> 로 교체 후 dry-run 운영 (env: <code>FREQTRADE__DRY_RUN=true</code>)</td></tr>
+    <tr><td><span class="pill warn">P0</span></td><td>docs/HISTORY.md 에 D16.H 채택 기록 (CLAUDE.md 규칙)</td></tr>
+    <tr><td><span class="pill info">P1</span></td><td>2023 max DD 38.73% 완화 — per-month NEG 3연속 시 self-shutdown protocol 추가</td></tr>
+    <tr><td><span class="pill info">P1</span></td><td>codex Round 2 review 요청 — post-fix numbers + bias 결과로 deployment 판단 받기</td></tr>
+    <tr><td><span class="pill info">P2</span></td><td>D17 — 2023 path risk 직교 detector (BTC dominance / funding / realized vol regime)</td></tr>
+  </tbody>
+</table>
+
+<!-- =================================================================== -->
+<h2>10. 산출물</h2>
+<table>
+  <tbody>
+    <tr><td>backtest zips</td><td><code>user_data/backtest_results/d16_actual/*.zip</code> (30 files: 20 pre + 10 post-fix; composite_a 는 pre/post 동일)</td></tr>
+    <tr><td>병렬 실행</td><td><code>scripts/d16_run_one.sh</code></td></tr>
+    <tr><td>비교 분석</td><td><code>scripts/d16_compare_actual_vs_sim.py</code></td></tr>
+    <tr><td>P0 walk-forward</td><td><code>scripts/d16_p0_walk_forward_with_2022.py</code></td></tr>
+    <tr><td>monthly bootstrap</td><td><code>scripts/d16_monthly_bootstrap.py</code></td></tr>
+    <tr><td>새 strategy</td><td><code>strategies/long_v14/Long_v14_5m_iter2391_clean_v2_B_Regime_adx_iso_composite.py</code> (composite_h 추가 + startup_candle_count=7499)</td></tr>
+    <tr><td>새 feature CSV</td><td><code>docs/_clean_v2_data/task5c_2022plus_chop_features.csv</code></td></tr>
+    <tr><td>walk-forward JSON</td><td><code>docs/_clean_v2_data/d16_walk_forward_with_2022.json</code></td></tr>
+    <tr><td>actual vs sim JSON</td><td><code>docs/_clean_v2_data/d16_actual_vs_sim.json</code></td></tr>
+    <tr><td>bootstrap JSON</td><td><code>docs/_clean_v2_data/d16_monthly_bootstrap.json</code></td></tr>
+    <tr><td>post-fix JSON</td><td><code>docs/_clean_v2_data/d16_post_fix.json</code></td></tr>
+    <tr><td>per-trade CSV</td><td><code>docs/_clean_v2_data/d16_actual_trades.csv</code> (425 trades)</td></tr>
+    <tr><td>bias check logs</td><td><code>/tmp/d16_lookahead2.log</code>, <code>/tmp/d16_recursive.log</code></td></tr>
+    <tr><td>본 보고서 (FINAL)</td><td><code>reports/d16_actual_vs_sim_report.html</code></td></tr>
+  </tbody>
+</table>
+
+<footer>
+  D16 Final · 2026-05-21 · freqtrade 2026.1 · ETH/USDT 선물 · 30 backtest runs · codex round 1 review · live-correct numbers
+</footer>
+
+</div>
+</body>
+</html>

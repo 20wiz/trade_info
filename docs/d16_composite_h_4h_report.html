@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>composite_h_4h — 4h/1h detail backtest (2022-2026)</title>
+<style>
+  :root {
+    --bg: #0d1117; --bg-elev: #161b22; --bg-card: #1a2030; --bg-card-2: #1e2632;
+    --border: #30363d; --text: #e6edf3; --text-muted: #8b949e;
+    --pass: #3fb950; --fail: #f85149; --warn: #d29922; --info: #58a6ff;
+    --accent: #bc8cff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.65; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 32px 24px 96px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 28px; }
+  h1 { font-size: 26px; margin: 0 0 6px; font-weight: 700; }
+  h2 { font-size: 22px; margin: 42px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  h3 { font-size: 17px; margin: 22px 0 10px; color: var(--accent); font-weight: 600; }
+  h4 { font-size: 15px; margin: 18px 0 8px; color: var(--info); font-weight: 600; }
+  .subtitle { color: var(--text-muted); font-size: 14px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .card.elev { background: var(--bg-card-2); }
+  .card.fail-card { border-color: rgba(248,81,73,0.4); }
+  .card-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .card-value { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .card-value.pass { color: var(--pass); }
+  .card-value.fail { color: var(--fail); }
+  .card-value.warn { color: var(--warn); }
+  .card-value.info { color: var(--info); }
+  .card-value.huge { font-size: 36px; }
+  .card-sub { font-size: 13px; color: var(--text-muted); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 13.5px; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg-elev); color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:hover td { background: rgba(88, 166, 255, 0.04); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pass { color: var(--pass); } .fail { color: var(--fail); } .warn { color: var(--warn); }
+  .info { color: var(--info); } .muted { color: var(--text-muted); }
+  .pill {
+    display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .pill.pass { background: rgba(63,185,80,0.15); color: var(--pass); }
+  .pill.fail { background: rgba(248,81,73,0.15); color: var(--fail); }
+  .pill.warn { background: rgba(210,153,34,0.15); color: var(--warn); }
+  .pill.info { background: rgba(88,166,255,0.15); color: var(--info); }
+  .callout { border-left: 4px solid var(--info); background: rgba(88,166,255,0.06); padding: 14px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; font-size: 14px; }
+  .callout.success { border-color: var(--pass); background: rgba(63,185,80,0.07); }
+  .callout.warn { border-color: var(--warn); background: rgba(210,153,34,0.08); }
+  .callout.fail { border-color: var(--fail); background: rgba(248,81,73,0.07); }
+  .callout-title { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+  code { background: var(--bg-elev); padding: 2px 7px; border-radius: 3px; font-size: 13px; font-family: "SF Mono", "Menlo", Consolas, monospace; color: var(--accent); }
+  pre { background: var(--bg-elev); padding: 14px 16px; border-radius: 6px; font-size: 12.5px; font-family: "SF Mono", "Menlo", Consolas, monospace; color: var(--text); overflow-x: auto; line-height: 1.5; border: 1px solid var(--border); }
+  pre code { background: transparent; padding: 0; color: inherit; }
+  .chart-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 12px 0; }
+  .chart-wrap svg { display: block; width: 100%; height: auto; }
+  .ladder { display: flex; align-items: flex-start; gap: 12px; margin: 12px 0; }
+  .ladder-step { background: var(--bg-card); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 0 6px 6px 0; flex: 1; min-width: 0; font-size: 13.5px; }
+  .ladder-step b { color: var(--accent); }
+  .toc { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin: 16px 0 26px; font-size: 13.5px; }
+  .toc ol { margin: 4px 0; padding-left: 22px; }
+  .toc li { margin: 3px 0; }
+  .toc a { color: var(--info); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>composite_h_4h — 4h timeframe / 1h detail backtest</h1>
+  <div class="subtitle">2026-05-21 · ETH/USDT 선물 · freqtrade backtest (5 yearly parallel runs) · timeframe=4h, timeframe_detail=1h</div>
+</header>
+
+<!-- ================================================================ -->
+<div class="callout fail">
+  <div class="callout-title">📌 한 줄 결론 — 4h timeframe 에서는 전략이 동작하지 않는다</div>
+  같은 composite_h 전략을 4h candle (1h detail) 위에서 돌리니 5년간 단 <b>2 trades 만 발생</b>, 둘 다 손실, 5y 누적 <b>−5.17%</b>. 5m 버전의 +210.16% 와 비교 시 timeframe 이동 시 정상 동작하지 않음을 확인.
+</div>
+
+<div class="grid grid-4">
+  <div class="card elev">
+    <div class="card-title">5y compound (4h/1h)</div>
+    <div class="card-value fail huge">−5.17%</div>
+    <div class="card-sub">2 trades, 0 wins</div>
+  </div>
+  <div class="card elev">
+    <div class="card-title">총 trade 수</div>
+    <div class="card-value warn">2</div>
+    <div class="card-sub">2022 1건, 2023 1건</div>
+  </div>
+  <div class="card elev">
+    <div class="card-title">Win rate</div>
+    <div class="card-value fail">0%</div>
+    <div class="card-sub">stop_loss / trailing_stop_loss</div>
+  </div>
+  <div class="card elev">
+    <div class="card-title">5m 대비</div>
+    <div class="card-value fail">−215.33pp</div>
+    <div class="card-sub">5m +210.16% → 4h −5.17%</div>
+  </div>
+</div>
+
+<div class="toc">
+  <div style="font-weight:600; margin-bottom:4px;">📑 구성</div>
+  <ol>
+    <li><a href="#what">composite_h 전략 설명 — 무엇을 하는가</a></li>
+    <li><a href="#setup">백테스트 셋업</a></li>
+    <li><a href="#results">결과 — 차트 + 표</a></li>
+    <li><a href="#why">왜 4h 에서는 안 통하나 — 진단</a></li>
+    <li><a href="#trades">발생한 2 trades 상세</a></li>
+    <li><a href="#next">다음 단계</a></li>
+  </ol>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="what">1. composite_h 전략 설명</h2>
+
+<h3>1.1 전체 구조</h3>
+
+<p style="font-size:14px;">
+composite_h 는 <code>Long_v14_5m_iter2391</code> 계열의 가장 깊은 자손이며, <b>여러 entry 필터를 OR composite 형태로 누적</b>한 long-only 전략입니다. 진입 신호 (5분/4시간 mean-reversion + ADX trend + funding) 이 트리거되면, 다음의 <b>"bear / overextension 차단 필터"</b> 들이 차례로 검사되어 하나라도 발동하면 진입 차단:
+</p>
+
+<table>
+  <thead><tr><th>차단 필터</th><th>의미</th><th>구현</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>BTC EMA bear</b></td>
+      <td>BTC 1d EMA20 &lt; EMA60 일 때 (시장 전반 베어)</td>
+      <td>D12 v2: btc_filter 부모에서 처리</td>
+    </tr>
+    <tr>
+      <td><b>ETH 30d drawdown</b> (c2)</td>
+      <td>ETH 가격이 30일 최고가 대비 −12% 이상 하락</td>
+      <td>D14.A composite_a 추가 layer</td>
+    </tr>
+    <tr style="background: rgba(188,140,255,0.08);">
+      <td><b>ETH 1d ADX &gt; 28</b> (c5) 🎯</td>
+      <td>일봉 트렌드 강도가 매우 높을 때 (overextended)</td>
+      <td>D16.H composite_h 추가 layer (이번 작업의 핵심)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>1.2 D16.H 의 가설</h3>
+
+<div class="callout">
+  <b>가설</b>: 2023 의 catastrophic loss 시기 (ETH +91% recovery 인데도 long entry 53/53 모두 손실) 는 일봉 기준 <b>"강한 직진 상승의 막바지 = overextension"</b> 시기였다. 일봉 ADX(14) 가 28 을 넘는 시기에 5분봉 long entry 를 차단하면 이런 chop-after-overextension 손실을 피할 수 있다.
+</div>
+
+<h3>1.3 진입 logic 사다리</h3>
+
+<div class="ladder">
+  <div class="ladder-step"><b>1</b> 5m bar 에서 <b>regime classifier</b> 가 bull_highvol 로 분류</div>
+  <div class="ladder-step"><b>2</b> 4h <b>ADX trend ≥ 25</b> (isolation gate)</div>
+  <div class="ladder-step"><b>3</b> Mean-reversion signal (RSI / BB / disp) 조건</div>
+  <div class="ladder-step"><b>4</b> Funding 정상 (양의 funding)</div>
+</div>
+<p style="font-size:13.5px; color:var(--text-muted);">→ 위 4단계 통과 시 enter_long = 1 후보. 이후 <b>차단 필터 3개 (BTC bear OR ETH dd OR ETH 1d ADX&gt;28)</b> 가 하나라도 fire 하면 차단.</p>
+
+<h3>1.4 5m vs 4h timeframe 의 영향</h3>
+
+<table>
+  <thead><tr><th>요소</th><th>5m (원본)</th><th>4h (이번 백테스트)</th></tr></thead>
+  <tbody>
+    <tr><td>Entry candle</td><td>매 5분</td><td>매 4시간</td></tr>
+    <tr><td>Detail candle</td><td>(없음)</td><td>1h (entry/exit fine-grain)</td></tr>
+    <tr><td>RSI / BB / disp 계산</td><td>5m bars 위에서</td><td>4h bars 위에서</td></tr>
+    <tr><td>ATR_1h_at_arm</td><td>1h informative 데이터</td><td>4h 기준으로 stop 계산이 거칠어짐</td></tr>
+    <tr><td>F13 (c5) 1d ADX</td><td>5m → 1d resample</td><td>4h → 1d resample (동일 결과)</td></tr>
+    <tr><td>Signal density</td><td>1년 약 30~60건</td><td>1년 약 0~1건</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================ -->
+<h2 id="setup">2. 백테스트 셋업</h2>
+
+<pre><code># 새 strategy 클래스 (composite_h_4h)
+class Long_v14_5m_iter2391_clean_v2_B_Regime_strict_adx_iso_bull_highvol_composite_h_4h(
+    _CompositeBaseF,
+):
+    timeframe = "4h"
+    startup_candle_count = 200        # 200 × 4h ≈ 33 days, c5 1d-ADX(14) warmup 충족
+    eth_1d_adx_threshold = 28.0       # composite_h 와 동일
+    # _composite_bear: BTC_EMA_bear OR ETH_drawdown_30d OR ETH_1d_ADX > 28
+
+# 5개 연도 병렬 실행 (~3분, 24-core)
+for YEAR in 2022 2023 2024 2025 2026; do
+  uv run freqtrade backtesting \
+    --config docs/_clean_v2_data/d16_chop_backtest_config.json \
+    --strategy ...composite_h_4h \
+    --strategy-path strategies/long_v14 \
+    --timeframe 4h --timeframe-detail 1h \
+    --timerange ${YEAR}0101-$((YEAR+1))0101 \
+    --pairs ETH/USDT:USDT --export trades --cache none &
+done</code></pre>
+
+<!-- ================================================================ -->
+<h2 id="results">3. 결과 — 차트 + 표</h2>
+
+<h3>3.1 Equity curve (5y, 50% staking)</h3>
+
+<div class="chart-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 280" style="background:#0d1117;border-radius:6px;width:100%;height:auto;"><text x="380.0" y="20" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="600">composite_h_4h — Equity curve (5y, 50% staking)</text><line x1="50" y1="230.0" x2="710" y2="230.0" stroke="#30363d" stroke-dasharray="2 4"/><text x="44" y="233.0" text-anchor="end" font-size="10" fill="#8b949e">-10%</text><line x1="50" y1="110.0" x2="710" y2="110.0" stroke="#30363d" stroke-dasharray="2 4"/><text x="44" y="113.0" text-anchor="end" font-size="10" fill="#8b949e">+0%</text><line x1="50" y1="110.0" x2="710" y2="110.0" stroke="#8b949e" stroke-width="0.6"/><path d="M 50.0,110.0 L 195.5,143.0 L 284.2,172.1 L 710.0,172.1" stroke="#3fb950" stroke-width="2" fill="none"/><line x1="50" y1="230" x2="710" y2="230" stroke="#8b949e"/><line x1="50" y1="40" x2="50" y2="230" stroke="#8b949e"/><line x1="50.0" y1="230" x2="50.0" y2="235" stroke="#8b949e"/><text x="50.0" y="248" text-anchor="middle" font-size="11" fill="#8b949e">2022</text><line x1="202.4" y1="230" x2="202.4" y2="235" stroke="#8b949e"/><text x="202.4" y="248" text-anchor="middle" font-size="11" fill="#8b949e">2023</text><line x1="354.7" y1="230" x2="354.7" y2="235" stroke="#8b949e"/><text x="354.7" y="248" text-anchor="middle" font-size="11" fill="#8b949e">2024</text><line x1="507.5" y1="230" x2="507.5" y2="235" stroke="#8b949e"/><text x="507.5" y="248" text-anchor="middle" font-size="11" fill="#8b949e">2025</text><line x1="659.9" y1="230" x2="659.9" y2="235" stroke="#8b949e"/><text x="659.9" y="248" text-anchor="middle" font-size="11" fill="#8b949e">2026</text></svg>
+</div>
+
+<h3>3.2 Yearly P&L bars</h3>
+
+<div class="chart-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 280" style="background:#0d1117;border-radius:6px;width:100%;height:auto;"><text x="310.0" y="18" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="600">Yearly compound P&amp;L (4h/1h)</text><line x1="60" y1="135.0" x2="590" y2="135.0" stroke="#30363d" stroke-dasharray="2 4"/><text x="54" y="138.0" text-anchor="end" font-size="10" fill="#8b949e">+0%</text><line x1="60" y1="135.0" x2="590" y2="135.0" stroke="#8b949e"/><rect x="75.1" y="135.0" width="75.7" height="28.8" fill="#f85149"/><rect x="181.1" y="135.0" width="75.7" height="26.2" fill="#f85149"/><rect x="287.1" y="135.0" width="75.7" height="0.5" fill="#3fb950"/><rect x="393.1" y="135.0" width="75.7" height="0.5" fill="#3fb950"/><rect x="499.1" y="135.0" width="75.7" height="0.5" fill="#3fb950"/><text x="113.0" y="177.8" text-anchor="middle" font-size="11" fill="#f85149" font-weight="600">-2.7%</text><text x="113.0" y="255" text-anchor="middle" font-size="11" fill="#8b949e">2022</text><text x="219.0" y="175.2" text-anchor="middle" font-size="11" fill="#f85149" font-weight="600">-2.5%</text><text x="219.0" y="255" text-anchor="middle" font-size="11" fill="#8b949e">2023</text><text x="325.0" y="131.0" text-anchor="middle" font-size="11" fill="#3fb950" font-weight="600">+0.0%</text><text x="325.0" y="255" text-anchor="middle" font-size="11" fill="#8b949e">2024</text><text x="431.0" y="131.0" text-anchor="middle" font-size="11" fill="#3fb950" font-weight="600">+0.0%</text><text x="431.0" y="255" text-anchor="middle" font-size="11" fill="#8b949e">2025</text><text x="537.0" y="131.0" text-anchor="middle" font-size="11" fill="#3fb950" font-weight="600">+0.0%</text><text x="537.0" y="255" text-anchor="middle" font-size="11" fill="#8b949e">2026</text></svg>
+</div>
+
+<h3>3.3 Trade scatter</h3>
+
+<div class="chart-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 260" style="background:#0d1117;border-radius:6px;width:100%;height:auto;"><text x="380.0" y="18" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="600">Per-trade profit_ratio scatter</text><line x1="50" y1="125.0" x2="730" y2="125.0" stroke="#8b949e"/><line x1="50" y1="172.5" x2="730" y2="172.5" stroke="#30363d" stroke-dasharray="2 4"/><text x="44" y="175.5" text-anchor="end" font-size="10" fill="#8b949e">-5%</text><line x1="50" y1="77.5" x2="730" y2="77.5" stroke="#30363d" stroke-dasharray="2 4"/><text x="44" y="80.5" text-anchor="end" font-size="10" fill="#8b949e">+5%</text><line x1="50" y1="220.0" x2="730" y2="220.0" stroke="#30363d" stroke-dasharray="2 4"/><text x="44" y="223.0" text-anchor="end" font-size="10" fill="#8b949e">-10%</text><line x1="50" y1="30.0" x2="730" y2="30.0" stroke="#30363d" stroke-dasharray="2 4"/><text x="44" y="33.0" text-anchor="end" font-size="10" fill="#8b949e">+10%</text><circle cx="199.9" cy="177.2" r="3.5" fill="#f85149" fill-opacity="0.7"/><circle cx="291.0" cy="172.4" r="3.5" fill="#f85149" fill-opacity="0.7"/><line x1="50" y1="220" x2="730" y2="220" stroke="#8b949e"/><line x1="50.0" y1="220" x2="50.0" y2="225" stroke="#8b949e"/><text x="50.0" y="238" text-anchor="middle" font-size="11" fill="#8b949e">2022</text><line x1="207.0" y1="220" x2="207.0" y2="225" stroke="#8b949e"/><text x="207.0" y="238" text-anchor="middle" font-size="11" fill="#8b949e">2023</text><line x1="364.0" y1="220" x2="364.0" y2="225" stroke="#8b949e"/><text x="364.0" y="238" text-anchor="middle" font-size="11" fill="#8b949e">2024</text><line x1="521.4" y1="220" x2="521.4" y2="225" stroke="#8b949e"/><text x="521.4" y="238" text-anchor="middle" font-size="11" fill="#8b949e">2025</text><line x1="678.4" y1="220" x2="678.4" y2="225" stroke="#8b949e"/><text x="678.4" y="238" text-anchor="middle" font-size="11" fill="#8b949e">2026</text></svg>
+</div>
+
+<h3>3.4 연도별 수치</h3>
+
+<table>
+  <thead><tr><th>년도</th><th class="num">#Trades</th><th class="num">Wins</th><th class="num">Losses</th><th class="num">P&L</th><th class="num">Max DD</th></tr></thead>
+  <tbody>
+    <tr><td>2022</td><td class="num">1</td><td class="num">0</td><td class="num">1</td><td class="num fail">−2.75%</td><td class="num">2.75%</td></tr>
+    <tr><td>2023</td><td class="num">1</td><td class="num">0</td><td class="num">1</td><td class="num fail">−2.49%</td><td class="num">2.49%</td></tr>
+    <tr><td>2024</td><td class="num muted">0</td><td class="num muted">—</td><td class="num muted">—</td><td class="num muted">0.00%</td><td class="num muted">—</td></tr>
+    <tr><td>2025</td><td class="num muted">0</td><td class="num muted">—</td><td class="num muted">—</td><td class="num muted">0.00%</td><td class="num muted">—</td></tr>
+    <tr><td>2026 (4M)</td><td class="num muted">0</td><td class="num muted">—</td><td class="num muted">—</td><td class="num muted">0.00%</td><td class="num muted">—</td></tr>
+    <tr style="border-top:2px solid var(--border);"><td><b>5y compound</b></td><td class="num"><b>2</b></td><td class="num"><b>0</b></td><td class="num"><b>2</b></td><td class="num fail"><b>−5.17%</b></td><td class="num">2.75%</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================ -->
+<h2 id="why">4. 왜 4h 에서는 안 통하나 — 진단</h2>
+
+<p style="font-size:14px;">composite_h 의 모든 진입 신호 logic (RSI, BB, disp, ATR, MACD, ADX 등) 은 5분봉 위에서 calibrate 됐습니다. 4h 로 timeframe 을 옮기면:</p>
+
+<h3>4.1 Signal density 의 붕괴</h3>
+<table>
+  <thead><tr><th>요소</th><th class="num">5m</th><th class="num">4h</th><th>비율</th></tr></thead>
+  <tbody>
+    <tr><td>연간 캔들 수</td><td class="num">~105,000</td><td class="num">~2,200</td><td>×0.02</td></tr>
+    <tr><td>연간 entry 후보 (D14.A)</td><td class="num">~30</td><td class="num">~0~3</td><td>×0.05</td></tr>
+    <tr><td>composite_h 통과 entry</td><td class="num">12~21</td><td class="num">0~1</td><td>×0.05</td></tr>
+  </tbody>
+</table>
+
+<h3>4.2 hardcoded threshold mismatch</h3>
+<div class="callout warn">
+  RSI / BB-disp 의 threshold (예: RSI &lt; 30, BB-width &lt; 1.5%) 가 <b>5m bar 의 분포 기준</b>으로 잡혀있음.<br>
+  4h bar 는 변동성이 <b>훨씬 크고 분포가 다름</b> → 같은 threshold 가 4h 에서는 거의 발동하지 않음.
+</div>
+
+<h3>4.3 4h 특정 indicator 의 의미 변화</h3>
+<div class="callout warn">
+  5m 전략은 <code>ATR_1h_at_arm</code>, <code>4h regime</code> 등의 <b>multi-timeframe informative</b> 를 사용. 4h 가 primary timeframe 이 되면 같은 indicator 가 다른 컨텍스트로 해석되어 entry 조건이 비정합.
+</div>
+
+<h3>4.4 결과 해석</h3>
+<div class="callout">
+  4h 에서 발생한 2 trades 는 모두 stop-loss 로 종료. 이는 <b>4h 위의 signal logic 이 "정상" 입력으로 인식하지 않고, 가뭄 끝에 우연히 통과한 caustom edge case</b>임을 보여줌. 만약 이 전략을 4h timeframe 에서 운영하려면 <b>모든 threshold 를 4h 분포 기준으로 재-calibrate</b> 해야 함 (사실상 새 전략 개발).
+</div>
+
+<!-- ================================================================ -->
+<h2 id="trades">5. 발생한 2 trades 상세</h2>
+
+<table>
+  <thead><tr><th>년도</th><th>Open</th><th>Close</th><th>Duration</th><th>profit_ratio</th><th>Enter Tag</th><th>Exit Reason</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>2022</td>
+      <td>2022-12-15 12:00</td>
+      <td>2022-12-15 13:00</td>
+      <td>1h</td>
+      <td class="fail">−5.49%</td>
+      <td><code>regime:bull_highvol|adx_trend_25_iso_funding</code></td>
+      <td>stop_loss</td>
+    </tr>
+    <tr>
+      <td>2023</td>
+      <td>2023-07-15 08:00</td>
+      <td>2023-07-16 02:00</td>
+      <td>18h</td>
+      <td class="fail">−4.99%</td>
+      <td><code>regime:bull_highvol|adx_trend_25_iso_funding</code></td>
+      <td>trailing_stop_loss</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  두 trade 모두 <code>bull_highvol</code> regime + ADX trend 25 + funding gate 통과한 후, 가격이 즉시 역행하여 stop / trailing_stop 으로 종료. F13&gt;28 차단도 통과한 케이스 (1d ADX 가 그날 28 미만이었거나, 차단 trades 자체가 거의 없음).
+</div>
+
+<!-- ================================================================ -->
+<h2 id="next">6. 다음 단계</h2>
+
+<table>
+  <thead><tr><th>우선순위</th><th>작업</th><th>이유</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="pill warn">P0</span></td>
+      <td>composite_h 의 운영은 <b>5m 만 사용</b> (4h 미사용 권고)</td>
+      <td>이번 결과 — 4h 에서는 signal density 가 사실상 0, 의미있는 거래 생성 불가</td>
+    </tr>
+    <tr>
+      <td><span class="pill info">P2 (선택)</span></td>
+      <td>4h 전용 strategy 별도 개발 — RSI/BB/disp threshold 를 4h 분포 기준으로 re-tune</td>
+      <td>같은 F13&gt;28 detector 는 timeframe-agnostic (1d 로 resample 하므로). 4h primary 신호만 다시 calibrate 하면 됨</td>
+    </tr>
+    <tr>
+      <td><span class="pill info">P3</span></td>
+      <td>15m / 1h timeframe 도 같이 sweep 해서 sweet spot 확인</td>
+      <td>5m 과 4h 사이 어딘가에 더 robust 한 timeframe 이 있을 수 있음</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ================================================================ -->
+<h2>7. 산출물</h2>
+<table>
+  <tbody>
+    <tr><td>새 strategy 클래스</td><td><code>strategies/long_v14/Long_v14_5m_iter2391_clean_v2_B_Regime_adx_iso_composite.py</code> (composite_h_4h 추가)</td></tr>
+    <tr><td>backtest zips (5개)</td><td><code>user_data/backtest_results/d16_4h/*.zip</code></td></tr>
+    <tr><td>summary JSON</td><td><code>docs/_clean_v2_data/d16_4h_summary.json</code></td></tr>
+    <tr><td>chart SVGs</td><td><code>docs/_clean_v2_data/d16_4h_charts/equity.svg</code>, <code>yearly_bars.svg</code>, <code>trade_scatter.svg</code></td></tr>
+    <tr><td>chart 생성 스크립트</td><td><code>scripts/d16_4h_charts.py</code></td></tr>
+    <tr><td>본 보고서</td><td><code>reports/d16_composite_h_4h_report.html</code></td></tr>
+  </tbody>
+</table>
+
+<footer>
+  composite_h 4h/1h backtest · 2026-05-21 · freqtrade 2026.1 · ETH/USDT 선물 · 5 parallel yearly runs · 2 trades total
+</footer>
+
+</div>
+</body>
+</html>

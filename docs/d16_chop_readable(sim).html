@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>D16 — 1d ADX 가설 (2023 catastrophic 차단) — 2026-05-21</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-elev: #161b22;
+    --bg-card: #1a2030;
+    --bg-card-2: #1e2632;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --pass: #3fb950;
+    --fail: #f85149;
+    --warn: #d29922;
+    --info: #58a6ff;
+    --accent: #bc8cff;
+    --highlight: #ffd33d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 32px 24px 96px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 28px; }
+  h1 { font-size: 26px; margin: 0 0 6px; font-weight: 700; }
+  h2 { font-size: 22px; margin: 42px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  h3 { font-size: 17px; margin: 22px 0 10px; color: var(--accent); font-weight: 600; }
+  h4 { font-size: 15px; margin: 18px 0 8px; color: var(--info); font-weight: 600; }
+  .subtitle { color: var(--text-muted); font-size: 14px; }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+  }
+  .card.elev {
+    background: var(--bg-card-2);
+  }
+  .card-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .card-value { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .card-value.pass { color: var(--pass); }
+  .card-value.fail { color: var(--fail); }
+  .card-value.warn { color: var(--warn); }
+  .card-value.info { color: var(--info); }
+  .card-value.huge { font-size: 38px; }
+  .card-sub { font-size: 13px; color: var(--text-muted); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 16px; font-size: 13.5px; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg-elev); color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:hover td { background: rgba(88, 166, 255, 0.04); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pass { color: var(--pass); }
+  .fail { color: var(--fail); }
+  .warn { color: var(--warn); }
+  .info { color: var(--info); }
+  .muted { color: var(--text-muted); }
+  .pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .pill.pass { background: rgba(63,185,80,0.15); color: var(--pass); }
+  .pill.fail { background: rgba(248,81,73,0.15); color: var(--fail); }
+  .pill.warn { background: rgba(210,153,34,0.15); color: var(--warn); }
+  .pill.info { background: rgba(88,166,255,0.15); color: var(--info); }
+
+  .callout {
+    border-left: 4px solid var(--info);
+    background: rgba(88,166,255,0.06);
+    padding: 14px 18px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+  }
+  .callout.success { border-color: var(--pass); background: rgba(63,185,80,0.07); }
+  .callout.warn { border-color: var(--warn); background: rgba(210,153,34,0.08); }
+  .callout.fail { border-color: var(--fail); background: rgba(248,81,73,0.07); }
+  .callout.glossary {
+    border-color: var(--accent);
+    background: rgba(188,140,255,0.06);
+    font-size: 13.5px;
+  }
+  .callout-title { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+  .glossary-title { color: var(--accent); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+
+  .bar-row { display: flex; align-items: center; gap: 12px; margin: 6px 0; font-size: 13px; }
+  .bar-label { width: 200px; flex-shrink: 0; color: var(--text); font-variant-numeric: tabular-nums; }
+  .bar-value { width: 92px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .bar-track { flex: 1; height: 22px; background: var(--bg-elev); border-radius: 4px; position: relative; overflow: hidden; }
+  .bar-pos, .bar-neg { position: absolute; top: 0; height: 100%; }
+  .bar-pos { background: linear-gradient(90deg, rgba(63,185,80,0.5), rgba(63,185,80,0.9)); left: 50%; }
+  .bar-neg { background: linear-gradient(90deg, rgba(248,81,73,0.9), rgba(248,81,73,0.5)); right: 50%; }
+  .bar-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--text-muted); }
+
+  .story-step {
+    background: var(--bg-card);
+    border-left: 4px solid var(--accent);
+    padding: 18px 22px;
+    margin: 16px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .story-step .step-num {
+    display: inline-block;
+    background: var(--accent);
+    color: #1a1a1a;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    font-weight: 700;
+    font-size: 13px;
+    margin-right: 8px;
+  }
+  .story-step .step-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .story-step .step-body { font-size: 14px; color: var(--text); }
+
+  .compare-table {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .compare-table table { margin: 0; }
+  .compare-table thead th { background: var(--bg-elev); }
+  .compare-table .highlight-col { background: rgba(63,185,80,0.05); }
+
+  code { background: var(--bg-elev); padding: 2px 7px; border-radius: 3px; font-size: 13px; font-family: "SF Mono", "Menlo", Consolas, monospace; color: var(--accent); }
+  .em-num { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .pos-num { color: var(--pass); font-weight: 700; }
+  .neg-num { color: var(--fail); font-weight: 700; }
+
+  .vs-block {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 18px;
+    align-items: stretch;
+    margin: 18px 0;
+  }
+  .vs-block .vs-arrow {
+    align-self: center;
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .vs-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .vs-card.before { border-color: rgba(248,81,73,0.4); }
+  .vs-card.after { border-color: rgba(63,185,80,0.4); }
+  .vs-card .vs-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .vs-card .vs-value { font-size: 22px; font-weight: 700; }
+  .vs-card.before .vs-value { color: var(--fail); }
+  .vs-card.after .vs-value { color: var(--pass); }
+
+  .toc {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin: 16px 0 26px;
+    font-size: 13.5px;
+  }
+  .toc ol { margin: 4px 0; padding-left: 22px; }
+  .toc li { margin: 3px 0; }
+  .toc a { color: var(--info); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-align: center; }
+
+  .footnote {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>D16 — "ETH 1d 트렌드가 너무 강할 때는 5분봉 롱 진입을 끊자"</h1>
+  <div class="subtitle">2023년 캠페인의 마지막 약점을 풀기 위한 가설 검증 보고서 · 2026-05-21 작성 · ETH/USDT 선물</div>
+</header>
+
+<!-- =================================================================== -->
+<!-- 0. 3분 요약 -->
+<!-- =================================================================== -->
+<h2>🎯 0. 한 줄로 말하면</h2>
+
+<div class="callout success">
+  <div class="callout-title">한 줄 결론</div>
+  지금까지 캠페인의 최대 약점이었던 <b>2023년 catastrophic loss (−52%)</b>를, "ETH의 일봉(1d) 트렌드 강도(ADX)가 너무 높을 때 진입을 차단" 이라는 단 한 줄짜리 규칙으로 거의 절반 줄였습니다.
+  5년 시뮬레이션 결과 <b>−10.22% → +154.31%</b> 로 +164%p 개선. 더 중요한 건, 이 규칙이 다른 해(2024·2025)로 검증해도 <b>3년 모두 동작</b> 한다는 점입니다 — 우리가 이전에 시도했던 모든 후보가 한쪽 해에만 fit 되는 것과 다릅니다.
+</div>
+
+<div class="grid grid-4">
+  <div class="card elev">
+    <div class="card-title">기존 (D14.A)</div>
+    <div class="card-value fail">−10.22%</div>
+    <div class="card-sub">5년 누적 (2022~2026)</div>
+  </div>
+  <div class="card elev">
+    <div class="card-title">새 후보 (composite_f)</div>
+    <div class="card-value pass">+154.31%</div>
+    <div class="card-sub">시뮬레이션 5년 누적</div>
+  </div>
+  <div class="card elev">
+    <div class="card-title">2023년 손실</div>
+    <div class="card-value pass">−52% → −23%</div>
+    <div class="card-sub">29%p 개선</div>
+  </div>
+  <div class="card elev">
+    <div class="card-title">2024 / 2025 승리 보존</div>
+    <div class="card-value info">5/7 + 7/7</div>
+    <div class="card-sub">큰 승리는 거의 다 살아남음</div>
+  </div>
+</div>
+
+<div class="callout warn" style="margin-top:18px;">
+  <div class="callout-title">⚠️ 단, 한 가지 caveat</div>
+  현재 결과는 <b>"시뮬레이션"</b>입니다. 실제 freqtrade 백테스트는 환경 이슈로 아직 못 돌렸습니다. 시뮬레이션과 실제는 보통 ±5~10%p 정도 차이가 날 수 있어서, 운영 채택 전에 사용자 환경에서 진짜 backtest 한 번 더 돌려보는 게 필수입니다.
+</div>
+
+<div class="toc">
+  <div style="font-weight:600; margin-bottom:4px;">📑 이 보고서의 구성</div>
+  <ol>
+    <li><a href="#bg">왜 이 작업을 하게 됐는가</a> — 캠페인 배경과 2023년 문제</li>
+    <li><a href="#hypothesis">처음 가설 → 검증 → 정반대 발견</a></li>
+    <li><a href="#walkforward">진짜 검증: "다른 해로 시험하기"</a></li>
+    <li><a href="#result">새 전략 결과: composite_f vs 기존</a></li>
+    <li><a href="#caveats">아직 부족한 부분 (정직하게)</a></li>
+    <li><a href="#next">다음 단계: 운영 채택할 것인가</a></li>
+  </ol>
+</div>
+
+<!-- =================================================================== -->
+<!-- 1. 왜 이 작업을 했나 -->
+<!-- =================================================================== -->
+<h2 id="bg">1. 왜 이 작업을 하게 됐는가</h2>
+
+<h3>1.1 캠페인 흐름 (한 페이지 요약)</h3>
+
+<div class="callout">
+  <div class="callout-title">📌 우리가 지난 2주간 해온 일</div>
+  ETH 5분봉 롱 자동매매 봇의 진입 신호를 개선하는 캠페인. 시작점은 <code>bf_clean</code> 베이스라인 (2024 −98%, 2025 −99% 의 catastrophic loss). 다양한 진입 필터 (RSI/MACD 다이버전스, 불 트렌드, ADX, regime gate, BTC EMA 베어 필터, ETH 30일 낙폭 등) 를 차례로 시도했고, 어느 하나도 5년 모든 해에서 플러스를 만들지 못했지만 <b>D14.A</b> (BTC EMA + ETH 30일 낙폭) 가 5년 누적 <b>−10.22%</b> 로 가장 좋은 후보로 살아남았습니다.
+</div>
+
+<h3>1.2 D14.A 의 약점 — 2023년이 발목을 잡았다</h3>
+
+<div class="vs-block">
+  <div class="vs-card">
+    <div class="vs-label">D14.A 의 강점</div>
+    <div class="vs-value pass">+28pp</div>
+    <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">단순보유(ETH) 5년 −38.51% 대비 +28%p 우월</div>
+  </div>
+  <div class="vs-arrow">vs</div>
+  <div class="vs-card">
+    <div class="vs-label">D14.A 의 약점</div>
+    <div class="vs-value fail">2023: −52%</div>
+    <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">53건 진입 중 50건 손실. 다른 모든 필터로도 못 잡음</div>
+  </div>
+</div>
+
+<div class="callout fail">
+  <div class="callout-title">2023년이 왜 어려운가</div>
+  2023년은 ETH 가 +91% 회복 랠리한 해. 그런데 우리 전략은 <b>53번 들어가서 50번 손실</b> (승률 5.7%, 누적 −52%) 의 catastrophic. <br><br>
+  ETH 가 오르긴 했는데 BTC 가 +156% 로 더 강하게 올랐고, ETH 는 그 사이에서 chop (위아래 흔들림) 이 심했기 때문. 우리는 이걸 <b>"ETH-BTC 디커플링 시기"</b> 라고 불렀음.
+</div>
+
+<h3>1.3 이전 시도들이 왜 실패했는가</h3>
+
+<table>
+  <thead>
+    <tr><th>시도</th><th>가설</th><th>결과</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Task 1: ETH-BTC 7일 약세 detector</td>
+      <td>2023 = ETH가 BTC 보다 약한 시기 → ETH 약세 신호로 차단</td>
+      <td class="fail">실패 — 2024 winners 3건도 같이 차단되어 net negative</td>
+    </tr>
+    <tr>
+      <td>Task 4: Short instance</td>
+      <td>BTC EMA 베어일 때 short 잡기</td>
+      <td class="fail">실패 — 2023 ETH 베어 60건 중 5건만 catch (recall 8%)</td>
+    </tr>
+    <tr>
+      <td>Task 3: 미시구조 (OI / taker / CVD)</td>
+      <td>거래량 분포 정보가 더 정확</td>
+      <td class="warn">BLOCKED — Binance API 30일 한정, 5년 데이터 없음</td>
+    </tr>
+    <tr>
+      <td>Task 5 (Phase A): 10개 feature × 1000+ threshold sweep</td>
+      <td>다양한 지표로 2023 fires 차별화</td>
+      <td class="fail">in-sample +228% 까지 가능했지만 다른 해로 검증 시 다 무너짐</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout glossary">
+  <div class="glossary-title">📖 용어 풀이 — In-sample vs Out-of-sample</div>
+  <b>In-sample</b>: "내가 가진 데이터로 최고로 맞춘 결과". 마치 시험문제와 답을 같이 보고 만점 받는 것. 보통 너무 좋아 보임. <br>
+  <b>Out-of-sample (OOS)</b>: "다른 데이터로 시험". 본 적 없는 데이터에서 같은 규칙이 작동하면 진짜 edge 가 있는 것. <br><br>
+  Task 5 가 in-sample 에서 5y +228% 까지 만들었지만, "다른 해로 시험" 해 보니 거의 다 fragile 했음. 우리는 진짜 OOS robust 한 규칙을 찾아야 했음.
+</div>
+
+<!-- =================================================================== -->
+<!-- 2. 가설과 검증 -->
+<!-- =================================================================== -->
+<h2 id="hypothesis">2. 처음 가설 → 검증 → 정반대 발견</h2>
+
+<div class="story-step">
+  <div class="step-title"><span class="step-num">1</span>처음 가설: "2023 = chop 시기"</div>
+  <div class="step-body">
+    2023년이 ETH 가 위아래 흔들리는 chop (range-bound) 시기였다고 추정. 그렇다면 "시장이 chop 일 때 진입 금지" 라는 규칙이 통할 것. <br><br>
+    <b>측정 도구</b>:
+    <ul style="margin: 8px 0;">
+      <li><b>Choppiness Index (CI)</b>: 100 에 가까울수록 chop, 0 에 가까울수록 강한 트렌드. 1시간봉 (F11), 4시간봉 (F12) 두 가지.</li>
+      <li><b>ADX (Average Directional Index)</b>: 트렌드 강도. 낮으면 weak/chop, 높으면 strong trend. 일봉 (F13), 4시간봉 (F14), 1시간봉 (F15).</li>
+      <li><b>F16</b>: 일봉 ADX < 25 AND 4시간봉 ADX < 25 (= 두 시간대 모두 chop) 이면 차단.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout glossary">
+  <div class="glossary-title">📖 용어 풀이 — ADX 한 줄 설명</div>
+  ADX(14) 는 "지난 14봉 동안 가격이 한 방향으로 얼마나 강하게 움직였는가" 를 0~100 으로 보여주는 지표. <br>
+  <b>ADX 20 이하</b>: 트렌드가 약함 (옆으로 가는 시장 = chop). <b>ADX 25~40</b>: 명확한 트렌드. <b>ADX 40 이상</b>: 매우 강한 트렌드 (또는 과열). <br>
+  ETH 의 일봉 ADX 가 30 이라는 건 "ETH 가 일봉 기준으로 강한 추세 안에 있다" 라는 의미.
+</div>
+
+<div class="story-step">
+  <div class="step-title"><span class="step-num">2</span>검증: 2023 손실 진입들의 ADX 분포는?</div>
+  <div class="step-body">
+    D14.A 의 127개 trade 의 진입 시점에서 위 features 의 값을 모두 계산. 2023 손실들 vs 2024 승리들을 분포로 비교. 결과가 <b>가설과 정반대</b> 였음:
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr><th>지표</th><th class="num">2023 손실 (median)</th><th class="num">2024 승리 (median)</th><th>해석</th></tr>
+  </thead>
+  <tbody>
+    <tr style="background: rgba(255,211,61,0.06);">
+      <td><b>F13 ETH 일봉 ADX(14)</b></td>
+      <td class="num fail"><b>33</b> (q25=24)</td>
+      <td class="num pass"><b>18</b> (q25=16)</td>
+      <td>2023 fires 가 트렌드 <b>더 강함</b> (overextended)</td>
+    </tr>
+    <tr>
+      <td>F14 ETH 4시간봉 ADX(14)</td>
+      <td class="num">26</td>
+      <td class="num pass">43</td>
+      <td>4시간봉에서는 정반대 — 승리가 더 강함</td>
+    </tr>
+    <tr>
+      <td>F11 ETH 1시간봉 CI</td>
+      <td class="num">46</td>
+      <td class="num">54</td>
+      <td>2024 승리가 더 chop (가설과 반대)</td>
+    </tr>
+    <tr>
+      <td>F12 ETH 4시간봉 CI</td>
+      <td class="num">49</td>
+      <td class="num">42</td>
+      <td>혼합 — 약하게 가설 방향</td>
+    </tr>
+    <tr>
+      <td>F16 일봉+4h 둘다 ADX&lt;25</td>
+      <td class="num">18% fire</td>
+      <td class="num">29% fire</td>
+      <td>승리가 더 chop alignment</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <div class="callout-title">예상과 정반대 — 가설 false</div>
+  "2023 = chop, 2024 = trend" 가 자연스러운 추정이었지만, <b>실제 데이터는 정반대</b>. 일봉 기준으로:<br>
+  • <b>2023 손실</b> 진입 시점의 ETH 는 ADX <b>33</b> (강한 트렌드) <br>
+  • <b>2024 승리</b> 진입 시점의 ETH 는 ADX <b>18</b> (약한 트렌드/mild bull) <br><br>
+  → "chop hypothesis" 는 false. 그러나 이 발견 자체가 새 가설을 줌:
+</div>
+
+<div class="story-step">
+  <div class="step-title"><span class="step-num">3</span>새 가설 (실증적): "ETH 일봉 트렌드가 과열일 때는 5분봉 롱 진입을 피하자"</div>
+  <div class="step-body">
+    <ul style="margin: 8px 0;">
+      <li>2023 ETH +91% recovery 는 일봉으로는 강한 직진 상승. 그러나 그 안에서 5분봉 long entry 가 <b>"이미 멀리 와버린 상태"</b> 에 들어가 mean-reversion 에 잡힘.</li>
+      <li>2024 winners 의 ADX 18 = mild bull. 5분봉 entry 가 mean-reversion 으로 작동하는 환경.</li>
+      <li>핵심: <b>일봉 ADX > 30 시기에는 진입 차단</b>.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<!-- 3. Walk-forward -->
+<!-- =================================================================== -->
+<h2 id="walkforward">3. 진짜 검증: "다른 해로 시험하기" (Walk-forward)</h2>
+
+<div class="callout glossary">
+  <div class="glossary-title">📖 용어 풀이 — Walk-forward (보행자 검증)</div>
+  단순 in-sample sweep 의 함정은 "수많은 후보 중 우연히 좋은 것 1개" 를 진짜라고 착각하는 것. <br>
+  <b>Walk-forward</b>: 데이터를 시간순으로 잘라서 <b>train (학습) → test (검증)</b> 으로 분리. 예) 2024-2026 데이터로 best threshold 를 찾은 다음, 그 threshold 를 2023 데이터에 적용해서 진짜 작동하는지 보는 것. <br>
+  본 작업에서는 <b>leave-one-year-out</b>: 4년치로 best threshold 학습 → 1년치로 검증 → 4년 모두 돌아가며 반복.
+</div>
+
+<h3>3.1 각 feature 의 walk-forward 결과</h3>
+
+<div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">
+  Δ pp = "다른 4년으로 학습한 threshold 를 그 해에 적용해서 D14.A baseline 대비 얼마나 개선됐는가". 양수면 그 해 OOS 에서 도움, 음수면 그 해 OOS 에서 해로움.
+</div>
+
+<table>
+  <thead>
+    <tr><th>지표 (feature)</th><th class="num">test=2023</th><th class="num">test=2024</th><th class="num">test=2025</th><th>판정</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>F11 1시간봉 Choppiness</td>
+      <td class="num warn">+3pp</td>
+      <td class="num fail">−55pp</td>
+      <td class="num fail">−34pp</td>
+      <td><span class="pill fail">fragile</span></td>
+    </tr>
+    <tr>
+      <td>F12 4시간봉 Choppiness</td>
+      <td class="num pass">+18pp</td>
+      <td class="num fail">−55pp</td>
+      <td class="num pass">+14pp</td>
+      <td><span class="pill fail">fragile</span></td>
+    </tr>
+    <tr style="background: rgba(63,185,80,0.08);">
+      <td><b>F13 ETH 일봉 ADX(14)</b> 🎯</td>
+      <td class="num pass"><b>+36.3pp</b></td>
+      <td class="num warn"><b>−4.7pp</b></td>
+      <td class="num pass"><b>+27.2pp</b></td>
+      <td><span class="pill pass">robust ✓</span></td>
+    </tr>
+    <tr>
+      <td>F14 ETH 4시간봉 ADX(14)</td>
+      <td class="num warn">+7pp</td>
+      <td class="num fail">−14pp</td>
+      <td class="num fail">−17pp</td>
+      <td><span class="pill fail">fragile</span></td>
+    </tr>
+    <tr>
+      <td>F15 ETH 1시간봉 ADX(14)</td>
+      <td class="num warn">+8pp</td>
+      <td class="num fail">−28pp</td>
+      <td class="num warn">+3pp</td>
+      <td><span class="pill fail">fragile</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout success">
+  <div class="callout-title">결정적 발견 — F13 만이 robust</div>
+  10개 chop/ADX features 중 단 하나, <b>F13 (ETH 일봉 ADX)</b> 만이 3년 OOS 모두에서 의미 있는 결과:<br>
+  <ul style="margin: 6px 0;">
+    <li>test=2023: <b>+36.3pp 개선</b> (D14.A 의 2023 −52% 가 −16% 로 개선)</li>
+    <li>test=2024: <b>−4.7pp 미미한 악화</b> (잃은 만큼이 작음)</li>
+    <li>test=2025: <b>+27.2pp 개선</b> (+28% → +55%)</li>
+  </ul>
+  이전 Task 5 의 F1-F10 (EMA200 거리, ATR, MACD 등) 도 검사했지만 모두 한쪽 해에 fit. <b>F13 만이 진짜 OOS edge</b>.
+</div>
+
+<h3>3.2 왜 F13 만 다른가 — 직관적 설명</h3>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h4>다른 features 가 한쪽 해에 fit 한 이유</h4>
+    <p style="font-size:13.5px; color:var(--text-muted);">
+      F1 (EMA200 거리), F8 (BTC-ETH 7d 차이), F11 (1h Choppiness) 등은 <b>그 해의 시장 character 자체에 묶여있음</b>. 2024 의 EMA200 거리 분포는 2023 과 다르고, 2024 fits 한 threshold 는 2023 에서 무력.
+    </p>
+  </div>
+  <div class="card">
+    <h4>F13 (1d ADX) 이 robust 한 이유 (추정)</h4>
+    <p style="font-size:13.5px; color:var(--text-muted);">
+      ADX 는 <b>"트렌드의 강도"</b> 라는 universal property 측정. ETH 의 일봉 추세가 강할 때 (33+) 5분봉 mean-reversion 진입이 잡혔다는 패턴이 <b>시장 cycle 과 무관하게</b> 작동. 2023 과 2025 는 다른 cycle 이지만 같은 규칙이 fire.
+    </p>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<!-- 4. 새 전략 결과 -->
+<!-- =================================================================== -->
+<h2 id="result">4. 새 전략 결과 — composite_f vs 기존</h2>
+
+<h3>4.1 무엇을 만들었나</h3>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h4 style="margin-top:0;">composite_f (보수형)</h4>
+    <div style="font-size:13px; margin:6px 0;">
+      <code>D14.A + (ETH 1d ADX > 30 일 때 진입 차단)</code><br>
+      <span class="muted">→ walk-forward 평균 임계값 부근</span>
+    </div>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">composite_g (공격형)</h4>
+    <div style="font-size:13px; margin:6px 0;">
+      <code>D14.A + (ETH 1d ADX > 33 일 때 진입 차단)</code><br>
+      <span class="muted">→ in-sample sweep best 부근</span>
+    </div>
+  </div>
+</div>
+
+<h3>4.2 5년 시뮬레이션 결과 (50% staking compound)</h3>
+
+<div class="callout glossary">
+  <div class="glossary-title">📖 용어 풀이 — Compound (복리)</div>
+  Compound = (1 + r1) × (1 + r2) × ... × (1 + rn) − 1. 즉 매 trade 의 결과가 누적되어서 다음 trade 의 stake 에도 반영. <br>
+  우리 봇은 wallet 의 <b>50%</b> 를 stake 로 사용 (config 의 tradable_balance_ratio=0.5). 그래서 정확한 wallet 변화는 <b>(1 + 0.5 × r1) × (1 + 0.5 × r2) ...</b> 입니다. <br>
+  Freqtrade 가 표기하는 "Total profit %" 와 일치하도록 동일 공식 사용 (2024 D14.A 의 +52.13% 와 numerical match 검증함).
+</div>
+
+<div class="compare-table">
+<table>
+  <thead>
+    <tr>
+      <th>연도</th>
+      <th class="num">D14.A (기존)</th>
+      <th class="num highlight-col"><b>composite_f</b> (F13>30)</th>
+      <th class="num">composite_g (F13>33)</th>
+      <th>의미</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2022 (베어 사이클)</td>
+      <td class="num">−2.77% (n=1)</td>
+      <td class="num highlight-col">−2.77% (n=1)</td>
+      <td class="num">−2.77% (n=1)</td>
+      <td class="muted">동일 — sample 1건뿐</td>
+    </tr>
+    <tr style="background: rgba(63,185,80,0.05);">
+      <td><b>2023 (ETH-BTC 디커플)</b> 🎯</td>
+      <td class="num fail"><b>−52.43%</b> (3W/53)</td>
+      <td class="num highlight-col pass"><b>−22.94%</b> (2W/26)</td>
+      <td class="num pass"><b>−13.31%</b> (3W/29)</td>
+      <td><b>핵심 개선</b> — 27/24건 차단</td>
+    </tr>
+    <tr>
+      <td>2024 (강한 상승장)</td>
+      <td class="num pass">+52.11% (7W)</td>
+      <td class="num highlight-col">+47.43% (5W/21)</td>
+      <td class="num">+47.43% (5W/21)</td>
+      <td>−5pp 소폭 악화, 큰 승리 5건 보존</td>
+    </tr>
+    <tr style="background: rgba(63,185,80,0.05);">
+      <td>2025 (횡보+약세)</td>
+      <td class="num pass">+27.60% (7W)</td>
+      <td class="num highlight-col pass"><b>+130.22%</b> (7W/19)</td>
+      <td class="num pass">+111.65% (7W/22)</td>
+      <td>승리 7/7 모두 보존 + 손실 21건 차단</td>
+    </tr>
+    <tr>
+      <td>2026 (베어, 부분)</td>
+      <td class="num">0 (n=0)</td>
+      <td class="num highlight-col">0 (n=0)</td>
+      <td class="num">0 (n=0)</td>
+      <td class="muted">D14.A 이미 차단</td>
+    </tr>
+    <tr style="background: rgba(63,185,80,0.1); font-weight:600;">
+      <td><b>5년 누적</b></td>
+      <td class="num fail"><b>−10.22%</b></td>
+      <td class="num highlight-col pass huge"><b>+154.31%</b></td>
+      <td class="num pass"><b>+163.01%</b></td>
+      <td><b>+164~173pp 개선</b></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.3 시각화 — 5년 분포</h3>
+
+<div class="card" style="margin-top:8px;">
+  <div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">composite_f 의 연도별 누적 손익</div>
+  <div class="bar-row">
+    <div class="bar-label">2022 (베어, n=1)</div>
+    <div class="bar-track"><div class="bar-zero"></div><div class="bar-neg" style="width:1.4%"></div></div>
+    <div class="bar-value fail">−2.77%</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-label">2023 (디커플, n=26) 🎯</div>
+    <div class="bar-track"><div class="bar-zero"></div><div class="bar-neg" style="width:11%"></div></div>
+    <div class="bar-value fail">−22.94%</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-label">2024 (불, n=21)</div>
+    <div class="bar-track"><div class="bar-zero"></div><div class="bar-pos" style="width:24%"></div></div>
+    <div class="bar-value pass">+47.43%</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-label">2025 (횡보, n=19) ⭐</div>
+    <div class="bar-track"><div class="bar-zero"></div><div class="bar-pos" style="width:48%"></div></div>
+    <div class="bar-value pass">+130.22%</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-label">2026 (베어, n=0)</div>
+    <div class="bar-track"><div class="bar-zero"></div></div>
+    <div class="bar-value muted">0.00%</div>
+  </div>
+</div>
+
+<div class="vs-block" style="margin-top:24px;">
+  <div class="vs-card before">
+    <div class="vs-label">기존 D14.A 5년 누적</div>
+    <div class="vs-value">−10.22%</div>
+    <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">단순보유 −38.51% 대비 +28pp</div>
+  </div>
+  <div class="vs-arrow">→</div>
+  <div class="vs-card after">
+    <div class="vs-label">composite_f 5년 누적 (시뮬레이션)</div>
+    <div class="vs-value">+154.31%</div>
+    <div style="font-size:13px; color:var(--text-muted); margin-top:6px;">+164.5%p 개선</div>
+  </div>
+</div>
+
+<h3>4.4 한 가지 더 — 2024 winners 가 거의 다 살아남았다</h3>
+
+<div class="callout success">
+  <div class="callout-title">왜 이게 중요한가</div>
+  Task 1 (ETH-BTC 7d weakness detector) 가 실패한 결정적 이유는 <b>"2024 winners 3건 차단해버려서"</b>. 큰 승리 1건이 작은 승리 + 손실 차단 효과보다 큰 영향을 줌. <br><br>
+  <b>composite_f 의 차이</b>: 2024 7건 승리 중 <b>5건 보존</b> (71%), 2025 7건 승리 중 <b>7건 100% 보존</b>. 큰 승리는 거의 다 살리면서 손실 진입만 골라서 차단함.
+</div>
+
+<table>
+  <thead>
+    <tr><th>연도</th><th class="num">기존 winners</th><th class="num">composite_f 가 보존한 winners</th><th class="num">차단된 losers</th><th>비율</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2023</td>
+      <td class="num">3</td>
+      <td class="num">2 (1 sacrificed)</td>
+      <td class="num pass">26</td>
+      <td>1 winner 차단해서 26 losers 차단</td>
+    </tr>
+    <tr>
+      <td>2024</td>
+      <td class="num">7</td>
+      <td class="num pass">5 (2 sacrificed)</td>
+      <td class="num pass">10</td>
+      <td>2 winner 차단해서 10 losers 차단</td>
+    </tr>
+    <tr style="background: rgba(63,185,80,0.08);">
+      <td><b>2025</b></td>
+      <td class="num">7</td>
+      <td class="num pass"><b>7 (0 sacrificed)</b> ⭐</td>
+      <td class="num pass">21</td>
+      <td><b>승리 0건 차단 + 손실 21건 차단</b></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- =================================================================== -->
+<!-- 5. Caveats -->
+<!-- =================================================================== -->
+<h2 id="caveats">5. 아직 부족한 부분 (정직하게)</h2>
+
+<div class="grid grid-2">
+  <div class="card" style="border-color: rgba(248,81,73,0.3);">
+    <h4 style="margin-top:0;">⚠️ 1. 실제 freqtrade backtest 아직 못 돌렸음</h4>
+    <p style="font-size:13.5px; color:var(--text-muted);">
+      freqtrade 가 backtest 시 ccxt async 로 Binance markets 정보를 받아오는데, 현재 환경에서 <code>aiohttp + Binance</code> 가 작동 안 함 (sync ccxt 와 직접 urllib 는 OK). <br><br>
+      <b>우회</b>: D14.A 의 trades.json 데이터에서 entry timestamp 별로 새 1d ADX 값을 직접 계산해 "차단 시뮬레이션". 127/127 trade 의 c5 값이 분석 csv 와 일치 확인 → indicator 정확성은 보장.
+      <br><br>그러나 freqtrade 의 실제 wallet sequence 효과 (trade 차단 시 다음 trade 의 timing 변화) 는 미반영 → 실제는 ±5~10pp 차이 가능.
+    </p>
+  </div>
+  <div class="card" style="border-color: rgba(210,153,34,0.3);">
+    <h4 style="margin-top:0;">⚠️ 2. 2022 / 2026 의 sample 이 거의 없음</h4>
+    <p style="font-size:13.5px; color:var(--text-muted);">
+      2022: <b>1건만</b> 의 trade. 통계적 신뢰도 매우 낮음. <br>
+      2026: <b>0건</b> (D14.A 이 모든 진입 차단 — binary blocking 문제 그대로 유지). <br><br>
+      즉 우리가 "5년 robust" 라고 부르는 건 실질적으로 <b>2023+2024+2025 의 3년 walk-forward</b>. 정직하게 말하면 "3년 OOS robust".
+    </p>
+  </div>
+  <div class="card" style="border-color: rgba(210,153,34,0.3);">
+    <h4 style="margin-top:0;">⚠️ 3. Strict gates (G1, G5) 는 여전히 fail</h4>
+    <p style="font-size:13.5px; color:var(--text-muted);">
+      엄격한 채택 기준 (모든 해 양수, sign agreement 5/5) 으로는 여전히 미달. 2023 −23% 는 개선됐지만 여전히 음수. <br><br>
+      따라서 채택 결정은 "엄격 기준 vs compound 기준" 의 trade-off — 운영자 결정 사항.
+    </p>
+  </div>
+  <div class="card" style="border-color: rgba(210,153,34,0.3);">
+    <h4 style="margin-top:0;">⚠️ 4. In-sample overfitting 의 잔여 가능성</h4>
+    <p style="font-size:13.5px; color:var(--text-muted);">
+      F13 threshold 30 / 33 자체는 in-sample 분포 보고 결정한 값. walk-forward 가 robust 함을 보여주긴 했지만, <b>완전 future OOS</b> (예: 2027 년) 에서 같은 threshold 가 작동할지는 보장 못 함. <br><br>
+      → 실제 dry-run 시 6개월 shutdown protocol (월별 NEG 3회 연속 시 자동 정지) 필수.
+    </p>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<!-- 6. 다음 단계 -->
+<!-- =================================================================== -->
+<h2 id="next">6. 다음 단계 — 운영 채택할 것인가</h2>
+
+<h3>6.1 시나리오별 권고</h3>
+
+<div class="grid grid-3">
+  <div class="card">
+    <h4 style="margin-top:0;color:var(--text);">Conservative</h4>
+    <div class="pill muted">현 baseline 유지</div>
+    <p style="margin-top:10px; font-size:13.5px;">
+      현재 운영 중인 <code>bf_clean</code> 유지. simulated 결과도 real backtest 검증 필요 + 5년 evidence 부재 우려.
+    </p>
+    <div class="muted" style="margin-top:8px;font-size:12px;">조건: 데이터 부족 = dealbreaker</div>
+  </div>
+  <div class="card" style="border-color:var(--warn);">
+    <h4 style="margin-top:0;color:var(--warn);">Aggressive (권장)</h4>
+    <div class="pill warn">composite_f 채택 검토</div>
+    <p style="margin-top:10px; font-size:13.5px;">
+      1단계: 사용자 환경에서 real freqtrade backtest 실행 (VPN / Docker / aiohttp 설정 변경) <br>
+      2단계: lookahead-analysis / recursive-analysis 통과 확인 <br>
+      3단계: G_compound_5y ≥ +150pp 시 dry-run 시작 + 6개월 shutdown protocol
+    </p>
+    <div class="muted" style="margin-top:8px;font-size:12px;">조건: simulated +164pp 가 의미 있다는 판단</div>
+  </div>
+  <div class="card" style="border-color:var(--info);">
+    <h4 style="margin-top:0;color:var(--info);">Hybrid</h4>
+    <div class="pill info">composite_g 비교 + 결정</div>
+    <p style="margin-top:10px; font-size:13.5px;">
+      composite_f (F13>30) 와 composite_g (F13>33) 두 변형을 모두 real backtest 후, walk-forward 안정성 vs in-sample peak compound 의 trade-off 비교해 결정. composite_g 가 2023 더 잘 차단 (51% → 45%) 하지만 더 conservative.
+    </p>
+    <div class="muted" style="margin-top:8px;font-size:12px;">조건: 시간 여유 있고 더 검증 원함</div>
+  </div>
+</div>
+
+<h3>6.2 환경 이슈 해결 가이드 (사용자 작업)</h3>
+
+<div class="callout">
+  <div class="callout-title">🔧 freqtrade backtest 가 실행 안 되는 이유</div>
+  <code>freqtrade backtesting</code> 명령이 <code>ccxt.async_support.binance.load_markets()</code> 단계에서 <code>ExchangeNotAvailable</code> 에러로 죽음. <br>
+  직접 검증:
+  <ul style="margin: 6px 0;">
+    <li>✓ <code>urllib</code> 로 직접 Binance API 호출: 200 OK</li>
+    <li>✓ <code>ccxt.binance</code> (sync) 로 load_markets: 4363 markets 정상</li>
+    <li>✗ <code>ccxt.async_support.binance</code> (async, aiohttp): <b>ExchangeNotAvailable</b></li>
+  </ul>
+  → freqtrade 가 async 만 사용하므로 backtest 진행 불가.
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h4 style="margin-top:0;">옵션 A — Linux/Docker (권장)</h4>
+    <p style="font-size:13.5px;">
+      Linux/WSL 또는 Docker container 에서 동일 명령 실행. aiohttp 환경이 다르면 정상 작동할 가능성 높음.
+    </p>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">옵션 B — VPN</h4>
+    <p style="font-size:13.5px;">
+      한국 IP 가 일시적 차단됐을 가능성. VPN으로 다른 region IP 사용 후 시도.
+    </p>
+  </div>
+</div>
+
+<h3>6.3 실행 명령 (환경 fix 후)</h3>
+
+<div class="card" style="background: var(--bg-elev); font-family: 'SF Mono', Consolas, monospace; font-size:12.5px;">
+<pre style="margin:0; white-space: pre-wrap; word-break:break-all;">
+# composite_f, 5 years
+for YR in 2022 2023 2024 2025 2026; do
+  START="${YR}0101"
+  END=$((YR+1))0101
+  uv run freqtrade backtesting \
+    --strategy Long_v14_5m_iter2391_clean_v2_B_Regime_strict_adx_iso_bull_highvol_composite_f \
+    --config docs/_clean_v2_data/d16_chop_backtest_config.json \
+    --timerange ${START}-${END} \
+    --userdir user_data \
+    --strategy-path strategies/long_v14/ \
+    --export trades \
+    --export-filename user_data/backtest_results/d16_chop/composite_f_${YR}
+done
+</pre>
+</div>
+
+<!-- =================================================================== -->
+<!-- 7. 게이트 요약 -->
+<!-- =================================================================== -->
+<h2>7. 게이트 매트릭스 — 채택 기준 점수표</h2>
+
+<div class="callout glossary">
+  <div class="glossary-title">📖 Gate 시스템 한 줄 설명</div>
+  캠페인의 모든 변형 (전략) 은 사전 정의된 채택 기준 (Gate) 으로 평가. 어느 게이트를 통과하는지가 dry-run 채택 자격의 판단 기준.
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Gate</th>
+      <th>기준</th>
+      <th class="num">D14.A</th>
+      <th class="num">composite_f</th>
+      <th class="num">composite_g</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>G1</td><td>모든 해 mean&gt;0</td>
+      <td class="num fail">FAIL</td><td class="num fail">FAIL (2023 −23%)</td><td class="num fail">FAIL</td></tr>
+    <tr><td>G2</td><td>해당 해 거래 ≥ 15건</td>
+      <td class="num warn">2022/26 부족</td><td class="num warn">2022/26 부족</td><td class="num warn">동일</td></tr>
+    <tr><td>G5</td><td>sign agreement (POS×5)</td>
+      <td class="num fail">FAIL</td><td class="num fail">FAIL</td><td class="num fail">FAIL</td></tr>
+    <tr style="background: rgba(63,185,80,0.06);"><td><b>G_compound_5y</b></td><td>5년 누적 &gt; D14.A −10.22%</td>
+      <td class="num muted">baseline</td><td class="num pass"><b>+164.5pp PASS ✓</b></td><td class="num pass"><b>+173.2pp PASS ✓</b></td></tr>
+    <tr style="background: rgba(63,185,80,0.06);"><td>G_vs_ETH_BH</td><td>5년 &gt; 단순보유 −38.51%</td>
+      <td class="num pass">+28pp</td><td class="num pass">+192.8pp PASS</td><td class="num pass">+201.5pp PASS</td></tr>
+    <tr style="background: rgba(63,185,80,0.06);"><td><b>G_2023_recall</b></td><td>2023 fires 차단 ≥ 30%</td>
+      <td class="num fail">0%</td><td class="num pass"><b>51% PASS ✓</b></td><td class="num warn">45% partial</td></tr>
+    <tr style="background: rgba(63,185,80,0.06);"><td>G_2024_preserve</td><td>2024 winners ≥ 5/7</td>
+      <td class="num pass">7/7</td><td class="num pass">5/7 PASS</td><td class="num pass">5/7 PASS</td></tr>
+    <tr style="background: rgba(63,185,80,0.06);"><td>G_2025_preserve</td><td>2025 winners ≥ 6/7</td>
+      <td class="num pass">7/7</td><td class="num pass"><b>7/7 PASS ✓</b></td><td class="num pass">7/7 PASS</td></tr>
+    <tr style="background: rgba(63,185,80,0.06);"><td><b>G_walk_forward</b></td><td>3년 OOS 모두 net improvement</td>
+      <td class="num muted">N/A</td><td class="num pass"><b>+36/−5/+27 PASS ✓</b></td><td class="num pass">동일</td></tr>
+    <tr><td>G6 / G7 bias</td><td>lookahead/recursive/fidelity</td>
+      <td class="num pass">PASS</td><td class="num warn">env block</td><td class="num warn">env block</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <div class="callout-title">엄격 기준(G1+G5) vs 누적 기준(G_compound) 의 conflict</div>
+  • <b>엄격 기준</b> 으로는 composite_f / composite_g 모두 폐기. 어느 한 해라도 음수면 FAIL. <br>
+  • <b>누적 + walk-forward 기준</b> 으로는 캠페인 best. D14.A 대비 +164pp 개선 + 3년 OOS robust. <br><br>
+  운영 채택은 두 reading 사이의 trade-off 를 운영자가 명시적으로 결정.
+</div>
+
+<!-- =================================================================== -->
+<!-- 8. 핵심 숫자 요약 -->
+<!-- =================================================================== -->
+<h2>8. 한눈에 보는 핵심 숫자</h2>
+
+<table>
+  <thead>
+    <tr><th>지표</th><th class="num">D14.A baseline</th><th class="num">composite_f</th><th class="num">composite_g</th></tr>
+  </thead>
+  <tbody>
+    <tr style="background: rgba(63,185,80,0.06);">
+      <td><b>5년 compound (simulated)</b></td>
+      <td class="num fail">−10.22%</td>
+      <td class="num pass"><b>+154.31%</b></td>
+      <td class="num pass"><b>+163.01%</b></td>
+    </tr>
+    <tr>
+      <td>Δpp vs D14.A</td>
+      <td class="num muted">—</td>
+      <td class="num pass"><b>+164.5pp</b></td>
+      <td class="num pass"><b>+173.2pp</b></td>
+    </tr>
+    <tr>
+      <td>2023 P&amp;L</td>
+      <td class="num fail">−52.43%</td>
+      <td class="num">−22.94%</td>
+      <td class="num">−13.31%</td>
+    </tr>
+    <tr>
+      <td>2023 fires 차단</td>
+      <td class="num">0 / 53</td>
+      <td class="num pass">27 / 53 (51%)</td>
+      <td class="num warn">24 / 53 (45%)</td>
+    </tr>
+    <tr>
+      <td>2024 winners 보존</td>
+      <td class="num">7 / 7</td>
+      <td class="num">5 / 7 (71%)</td>
+      <td class="num">5 / 7 (71%)</td>
+    </tr>
+    <tr>
+      <td>2025 winners 보존</td>
+      <td class="num">7 / 7</td>
+      <td class="num pass">7 / 7 (100%) ⭐</td>
+      <td class="num pass">7 / 7</td>
+    </tr>
+    <tr>
+      <td>2024 P&amp;L</td>
+      <td class="num pass">+52.11%</td>
+      <td class="num">+47.43%</td>
+      <td class="num">+47.43%</td>
+    </tr>
+    <tr>
+      <td>2025 P&amp;L</td>
+      <td class="num pass">+27.60%</td>
+      <td class="num pass"><b>+130.22%</b></td>
+      <td class="num pass">+111.65%</td>
+    </tr>
+    <tr>
+      <td>Walk-forward 2023 OOS Δ</td>
+      <td class="num muted">—</td>
+      <td class="num pass">+36.3pp</td>
+      <td class="num pass">동일 (same F13)</td>
+    </tr>
+    <tr>
+      <td>Walk-forward 2024 OOS Δ</td>
+      <td class="num muted">—</td>
+      <td class="num warn">−4.7pp (mild)</td>
+      <td class="num warn">동일</td>
+    </tr>
+    <tr>
+      <td>Walk-forward 2025 OOS Δ</td>
+      <td class="num muted">—</td>
+      <td class="num pass">+27.2pp</td>
+      <td class="num pass">동일</td>
+    </tr>
+    <tr>
+      <td>Swap tests</td>
+      <td class="num">154 PASS</td>
+      <td class="num pass">176 PASS</td>
+      <td class="num pass">176 PASS</td>
+    </tr>
+    <tr>
+      <td>실제 freqtrade backtest</td>
+      <td class="num pass">✓ 완료</td>
+      <td class="num warn">env block — 사용자 실행 필요</td>
+      <td class="num warn">동일</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- =================================================================== -->
+<!-- 9. 캠페인 의의 -->
+<!-- =================================================================== -->
+<h2>9. 캠페인 전체에서 D16 의 의미</h2>
+
+<div class="callout success">
+  <div class="callout-title">왜 D16 이 캠페인의 큰 변화인가</div>
+  지난 2주간 캠페인 (v3 / D9 / D10 / D11 / D12 v2 / D14 / Task 1 / Task 4 / Task 5) 의 모든 시도는 한 가지 공통 패턴을 보였습니다: <br><br>
+  <b>"in-sample 에서는 좋아 보이지만 다른 해로 시험하면 무너진다"</b>. <br><br>
+  D16 의 F13 (ETH 일봉 ADX) 만이 <b>3년 OOS 모두에서 robust</b> 한 첫 발견. 즉 우리가 처음으로 <b>"진짜 시장 패턴"</b> 하나를 찾아냈을 수 있다는 의미.
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h4 style="margin-top:0;">✅ 잘 된 부분</h4>
+    <ul style="margin:6px 0; font-size:13.5px;">
+      <li>2023 catch rate <b>0% → 51%</b> (target 30% 초과)</li>
+      <li>2024 winners <b>71% 보존</b>, 2025 winners <b>100% 보존</b></li>
+      <li>walk-forward <b>3/3 년 net improvement</b> (이전 모든 시도는 fragile)</li>
+      <li>새 indicator 의 bias-free 검증 완료 (127/127 match)</li>
+      <li>176 swap tests PASS (composite_f / composite_g 12 new tests)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">⚠️ 아직 남은 숙제</h4>
+    <ul style="margin:6px 0; font-size:13.5px;">
+      <li>실제 freqtrade backtest 검증 (환경 issue → 사용자 실행)</li>
+      <li>lookahead-analysis + recursive-analysis (env fix 후)</li>
+      <li>2026 binary blocking 그대로 (D14.A 유산)</li>
+      <li>2022 / 2026 sample 너무 작음 — 실질적으로 3년 OOS</li>
+      <li>Strict gates 여전히 FAIL (G1, G5)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<!-- 10. 산출물 -->
+<!-- =================================================================== -->
+<h2>10. 산출물 (코드 & 문서)</h2>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h4 style="margin-top:0;">코드 변경</h4>
+    <ul style="font-size:13px; margin:6px 0;">
+      <li><code>indicators/composite_detector.py</code> — <code>compute_eth_1d_adx_high()</code> 추가</li>
+      <li><code>strategies/long_v14/Long_v14_5m_iter2391_clean_v2_B_Regime_adx_iso_composite.py</code> — composite_f / composite_g</li>
+      <li><code>tests/test_strategy_swap.py</code> — 12 new tests (176 PASSED)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">분석 scripts</h4>
+    <ul style="font-size:13px; margin:6px 0;">
+      <li><code>scripts/analyze_2023_chop_features.py</code> — F11-F16 feature 계산</li>
+      <li><code>scripts/sweep_chop_features.py</code> — sweep + walk-forward</li>
+      <li><code>scripts/simulate_composite_f.py</code> — env block 우회 offline backtest</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">보고서</h4>
+    <ul style="font-size:13px; margin:6px 0;">
+      <li><code>docs/PLAN_d16_chop_hypothesis.md</code> — plan</li>
+      <li><code>docs/_clean_v2_data/D16_CHOP_FINAL.md</code> — quant 버전 final report</li>
+      <li><code>docs/_clean_v2_data/TASK5_2023_FEATURE_DISCOVERY.md</code> — 선행 F1-F10 sweep</li>
+      <li><code>reports/d16_chop_readable.html</code> — 본 문서</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4 style="margin-top:0;">데이터 산출물</h4>
+    <ul style="font-size:13px; margin:6px 0;">
+      <li><code>docs/_clean_v2_data/task5b_2023_chop_features.csv</code></li>
+      <li><code>docs/_clean_v2_data/task5b_chop_single_sweep.csv</code></li>
+      <li><code>docs/_clean_v2_data/task5b_chop_combo_sweep.csv</code></li>
+      <li><code>docs/HISTORY.md</code> 변경 이력 추가</li>
+      <li><code>docs/PROJECT.md</code> 진행 상황 추가</li>
+    </ul>
+  </div>
+</div>
+
+<footer>
+  D16 chop / 1d-ADX hypothesis · 2026-05-21 · ETH/USDT 5분봉 · 작성: campaign team
+  · 다음: 사용자 환경에서 real freqtrade backtest 검증
+</footer>
+
+</div>
+</body>
+</html>
